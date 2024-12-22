@@ -37,7 +37,7 @@ const Login = ({ cognitoAuth }:{cognitoAuth:any}) => {
     return (
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.logoContainer}>
-            <Image source={require('./assets/bigTeamGolfLogo.png')} style={styles.logo} />
+            <Image source={require('../assets/images/bigteamgolflogo.png')} style={styles.logo} />
           </View>
     
           {cognitoAuth.confirmUser ? (
