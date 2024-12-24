@@ -1,14 +1,10 @@
-import { StyleSheet } from 'react-native';
-
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
-
+import { StyleSheet, View } from 'react-native';
 import Login from './Login';
 
-export default function TabOneScreen() {
+export default function HomeScreen() {  // Renamed for clarity
   return (
     <View style={styles.container}>
-<Login cognitoAuth={""}/>
+      <Login cognitoAuth={""} />
     </View>
   );
 }
@@ -16,16 +12,6 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+    backgroundColor: '#3b873e', // Match your login screen background
   },
 });
