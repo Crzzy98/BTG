@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import Login from './Login';
-
+import CognitoAuth from '@/view-models/CognitoAuth';
 export default function HomeScreen() {  // Renamed for clarity
   return (
     <View style={styles.container}>
-      <Login cognitoAuth={""} />
+      <Login cognitoAuth={CognitoAuth} />
     </View>
   );
 }

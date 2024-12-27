@@ -5,9 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  ScrollViewProps,
   StyleSheet,
   Image,
+  Animated,
 } from 'react-native';
 
 const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
@@ -15,115 +15,119 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [handicap, setHandicap] = useState(0.0);
-  const [code, setCode] = useState('');
-  const [showSignUp, setShowSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const transition = new Animated.Value(0);
 
-  const buttonDisabled = firstName === '' || lastName === '';
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    Animated.timing(transition, {
+      toValue: isSignUp ? 0 : 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
 
   const handleSignIn = async () => {
     await cognitoAuth.signIn(username, password);
   };
 
   const handleSignUp = async () => {
-    await cognitoAuth.signUp(username, password, username, firstName, lastName, handicap.toString());
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters long.');
+      return;
+    }
+    await cognitoAuth.signUp(username, password, username, firstName, lastName);
   };
 
-  const handleConfirmSignUp = async () => {
-    await cognitoAuth.confirmSignUp(username, password, code);
-  };
+  const buttonColor = transition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#ffffff', '#3b873e'],
+  });
+
+  const buttonTextColor = transition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#3b873e', '#ffffff'],
+  });
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-
-      {cognitoAuth.confirmUser ? (
-        <View style={styles.formContainer}>
-          <Text style={styles.header}>Confirm Code</Text>
-          <Text style={styles.subText}>
-            A confirmation code has been sent to your email {username}. Please confirm the code to continue.
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmation Code"
-            value={code}
-            onChangeText={setCode}
-            keyboardType="number-pad"
-          />
-          <TouchableOpacity style={styles.button} onPress={handleConfirmSignUp}>
-            <Text style={styles.buttonText}>Confirm</Text>
-          </TouchableOpacity>
+      <View style={styles.formContainer}>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/images/bigteamgolflogo.png')} style={styles.logo} />
         </View>
-      ) : (
-        <View style={styles.formContainer}>
-          <View style={styles.logoContainer}>
-            <Image source={require('../assets/images/bigteamgolflogo.png')} style={styles.logo} />
-          </View>
-          <Text style={styles.header}>{showSignUp ? 'SIGN UP' : 'LOGIN'}</Text>
-          {showSignUp && (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                value={firstName}
-                onChangeText={setFirstName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Last Name"
-                value={lastName}
-                onChangeText={setLastName}
-              />
-              <Text style={styles.sliderText}>Handicap: {handicap}</Text>
-              {/* Slider implementation would be here */}
-            </>
-          )}
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={username}
-            onChangeText={setUsername}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+        <Text style={styles.header}>{isSignUp ? 'SIGN UP' : 'LOGIN'}</Text>
 
-          <View style={styles.passwordContainer}>
+        {isSignUp && (
+          <>
             <TextInput
               style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
+              placeholder="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Text style={styles.togglePassword}>{showPassword ? 'Hide' : 'Show'}</Text>
-            </TouchableOpacity>
-          </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+          </>
+        )}
 
-          {/* Your existing form content */}
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Login</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={username}
+          onChangeText={setUsername}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Text style={styles.togglePassword}>{showPassword ? 'Hide' : 'Show'}</Text>
           </TouchableOpacity>
-
-          <Text style={styles.createAccountText}>Need to Create an Account?</Text>
-
-          <TouchableOpacity style={styles.signUpButton}>
-            <Text style={styles.signUpButtonText}>Sign Up</Text>
-          </TouchableOpacity>
-
         </View>
-      )}
+
+        {isSignUp && (
+          <Text style={styles.passwordRequirements}>
+            Password must be at least 6 characters long.
+          </Text>
+        )}
+
+        <Animated.View
+          style={[
+            styles.button,
+            { backgroundColor: buttonColor },
+          ]}
+        >
+          <TouchableOpacity onPress={isSignUp ? handleSignUp : handleSignIn}>
+            <Animated.Text style={[styles.buttonText, { color: buttonTextColor }]}> 
+              {isSignUp ? 'Sign Up' : 'Login'}
+            </Animated.Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <TouchableOpacity style={styles.switchButton} onPress={toggleMode}>
+          <Text style={styles.switchText}>
+            {isSignUp ? 'Already have an account? Login' : 'Need to create an account? Sign Up'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#3b873e',
-  },
   container: {
     flexGrow: 1,
     padding: 20,
@@ -151,12 +155,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 10,
-  },
-  subText: {
-    fontSize: 14,
-    color: '#ffffff',
     marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
@@ -174,47 +174,26 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: '#ffffff',
   },
+  passwordRequirements: {
+    fontSize: 12,
+    color: '#ffffff',
+    marginBottom: 15,
+  },
   button: {
-    backgroundColor: '#ffffff',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#3b873e',
     marginBottom: 10,
   },
   buttonText: {
-    color: '#3b873e',
     fontWeight: 'bold',
   },
-  createAccountText: {
-    fontSize: 12,
-    color: '#ffffff',
-    textAlign: 'center',
+  switchButton: {
     marginTop: 20,
-    marginBottom: 10,
-  },
-  signUpButton: {
-    backgroundColor: '#3b873e',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    width: '100%',
-  },
-  signUpButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
   },
   switchText: {
-    marginTop: 20,
     textAlign: 'center',
     color: '#ffffff',
-  },
-  sliderText: {
-    color: '#ffffff',
-    marginBottom: 15,
   },
 });
 
