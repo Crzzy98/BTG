@@ -9,6 +9,7 @@ import {
   Image,
   Animated,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [username, setUsername] = useState('');
@@ -40,14 +41,24 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
     await cognitoAuth.signUp(username, password, username, firstName, lastName);
   };
 
-  const buttonColor = transition.interpolate({
+  const loginButtonColor = transition.interpolate({
     inputRange: [0, 1],
     outputRange: ['#ffffff', '#3b873e'],
   });
 
-  const buttonTextColor = transition.interpolate({
+  const signUpButtonColor = transition.interpolate({
     inputRange: [0, 1],
     outputRange: ['#3b873e', '#ffffff'],
+  });
+
+  const loginTextColor = transition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#3b873e', '#ffffff'],
+  });
+
+  const signUpTextColor = transition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#ffffff', '#3b873e'],
   });
 
   return (
@@ -87,14 +98,14 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
 
         <View style={styles.passwordContainer}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.passwordInput]}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.togglePassword}>{showPassword ? 'Hide' : 'Show'}</Text>
+            <Icon name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#000" />
           </TouchableOpacity>
         </View>
 
@@ -107,21 +118,26 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
         <Animated.View
           style={[
             styles.button,
-            { backgroundColor: buttonColor },
+            { backgroundColor: loginButtonColor },
           ]}
         >
-          <TouchableOpacity onPress={isSignUp ? handleSignUp : handleSignIn}>
-            <Animated.Text style={[styles.buttonText, { color: buttonTextColor }]}> 
-              {isSignUp ? 'Sign Up' : 'Login'}
-            </Animated.Text>
+          <TouchableOpacity onPress={handleSignIn}>
+            <Animated.Text style={[styles.buttonText, { color: loginTextColor }]}>Login</Animated.Text>
           </TouchableOpacity>
         </Animated.View>
 
-        <TouchableOpacity style={styles.switchButton} onPress={toggleMode}>
-          <Text style={styles.switchText}>
-            {isSignUp ? 'Already have an account? Login' : 'Need to create an account? Sign Up'}
-          </Text>
-        </TouchableOpacity>
+        <Animated.View
+          style={[
+            styles.button,
+            { backgroundColor: signUpButtonColor, marginTop: 10 },
+          ]}
+        >
+          <TouchableOpacity onPress={toggleMode}>
+            <Animated.Text style={[styles.buttonText, { color: signUpTextColor }]}>
+              Sign Up
+            </Animated.Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
     </ScrollView>
   );
@@ -165,14 +181,19 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     backgroundColor: '#ffffff',
+    width: '100%',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    backgroundColor: '#ffffff',
   },
-  togglePassword: {
-    marginLeft: 10,
-    color: '#ffffff',
+  passwordInput: {
+    flex: 1,
   },
   passwordRequirements: {
     fontSize: 12,
@@ -183,17 +204,10 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'center',
   },
   buttonText: {
     fontWeight: 'bold',
-  },
-  switchButton: {
-    marginTop: 20,
-  },
-  switchText: {
-    textAlign: 'center',
-    color: '#ffffff',
   },
 });
 
