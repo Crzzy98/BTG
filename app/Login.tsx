@@ -31,6 +31,14 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
 
   const handleSignIn = async () => {
     await cognitoAuth.signIn(username, password);
+
+    // Transition back to login view after signing in
+    setIsSignUp(false);
+    Animated.timing(transition, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
   };
 
   const handleSignUp = async () => {
@@ -61,8 +69,12 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
     outputRange: ['#ffffff', '#3b873e'],
   });
 
+  const signUpButtonBorderColor = transition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#ffffff', '#ffffff'], // White border when in sign-up mode
+  });
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.formContainer}>
         <View style={styles.logoContainer}>
           <Image source={require('../assets/images/bigteamgolflogo.png')} style={styles.logo} />
@@ -96,6 +108,9 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
           autoCapitalize="none"
         />
 
+        <Text style={styles.passwordRequirements}>
+          Password must be at least 6 characters long.
+        </Text>
         <View style={styles.passwordContainer}>
           <TextInput
             style={[styles.input, styles.passwordInput]}
@@ -105,41 +120,49 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Icon name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#000" />
+            <Icon style={styles.icon} name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#000" />
           </TouchableOpacity>
         </View>
 
-        {isSignUp && (
-          <Text style={styles.passwordRequirements}>
-            Password must be at least 6 characters long.
-          </Text>
-        )}
-
-        <Animated.View
-          style={[
-            styles.button,
-            { backgroundColor: loginButtonColor },
-          ]}
-        >
+        <View style={styles.formButtons}>
           <TouchableOpacity onPress={handleSignIn}>
-            <Animated.Text style={[styles.buttonText, { color: loginTextColor }]}>Login</Animated.Text>
+            <Animated.View
+              style={[styles.button, { backgroundColor: loginButtonColor }]}
+            >
+              <Animated.Text style={[styles.buttonText, { color: loginTextColor }]}>
+                Login
+              </Animated.Text>
+            </Animated.View>
           </TouchableOpacity>
-        </Animated.View>
 
-        <Animated.View
-          style={[
-            styles.button,
-            { backgroundColor: signUpButtonColor, marginTop: 10 },
-          ]}
-        >
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Text style={styles.signUpText}>
+            Need to create an account?
+          </Text>
           <TouchableOpacity onPress={toggleMode}>
-            <Animated.Text style={[styles.buttonText, { color: signUpTextColor }]}>
-              Sign Up
-            </Animated.Text>
+            <Animated.View
+              style={[
+                styles.button,
+                {
+                  backgroundColor: signUpButtonColor,
+                  borderColor: signUpButtonBorderColor,
+                  borderWidth: 2,
+                  marginTop: 10,
+                },
+              ]}
+            >
+              <Animated.Text style={[styles.buttonText, { color: signUpTextColor }]}>
+                Sign Up
+              </Animated.Text>
+            </Animated.View>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       </View>
-    </ScrollView>
   );
 };
 
@@ -159,6 +182,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
+    flexGrow: 1,
     backgroundColor: '#3b873e',
     borderRadius: 10,
     padding: 20,
@@ -186,28 +210,67 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+    width: '100%',
+    marginBottom: 15,
+  },
+  icon: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -45 }], 
+    zIndex: 1,
+  },
+  passwordInput: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
     padding: 10,
+    paddingRight: 45, // Make room for the icon
     backgroundColor: '#ffffff',
-  },
-  passwordInput: {
-    flex: 1,
+    width: '100%',
   },
   passwordRequirements: {
     fontSize: 12,
     color: '#ffffff',
-    marginBottom: 15,
+    marginBottom: 3,
+  },
+  formButtons: {
+    marginTop: 0,
+    width: '100%',
   },
   button: {
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+  },
+  signUpText: {
+    justifyContent: 'center',
+    alignItems:'center',
+    color: '#ffffff',
+    textAlign: 'center'
   },
   buttonText: {
     fontWeight: 'bold',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 15,  // Spacing above and below the divider
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ffffff',  // Match your design color
+  },
+  dividerText: {
+    color: '#ffffff',  // Match your design color
+    paddingHorizontal: 10,  // Space between lines and text
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
