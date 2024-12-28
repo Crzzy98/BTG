@@ -12,54 +12,59 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoginToggled, setIsLoginToggled] = useState(false);
   const transition = new Animated.Value(0);
 
-  const toggleMode = () => {
-    setIsSignUp(!isSignUp);
-    Animated.timing(transition, {
-      toValue: isSignUp ? 0 : 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const handleSignIn = async () => {
-    await cognitoAuth.signIn(username, password);
+  const handleLogin = async () => {
+    if (isSignUp)
+      setIsSignUp(!isSignUp);
 
     // Transition back to login view after signing in
-    setIsSignUp(false);
     Animated.timing(transition, {
       toValue: 0,
       duration: 300,
       useNativeDriver: false,
     }).start();
+
+    await cognitoAuth.signIn(email, password);
   };
 
   const handleSignUp = async () => {
+    if (!isSignUp) {
+      setIsSignUp(!isSignUp);
+      return;
+    }
     if (password.length < 6) {
       alert('Password must be at least 6 characters long.');
       return;
     }
-    await cognitoAuth.signUp(username, password, username, firstName, lastName);
+
+    Animated.timing(transition, {
+      toValue: isSignUp ? 0 : 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+
+    await cognitoAuth.signUp(email, password, email, firstName, lastName);
   };
 
   const loginButtonColor = transition.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#ffffff', '#3b873e'],
-  });
-
-  const signUpButtonColor = transition.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#3b873e', '#ffffff'],
+    outputRange: ['#ffffff', '#3b873e'], // white to green
   });
 
   const loginTextColor = transition.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#3b873e', '#ffffff'], // green to white
+  });
+
+  const signUpButtonColor = transition.interpolate({
     inputRange: [0, 1],
     outputRange: ['#3b873e', '#ffffff'],
   });
@@ -75,121 +80,124 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   });
 
   return (
-      <View style={styles.formContainer}>
-        <View style={styles.logoContainer}>
-          <Image source={require('../assets/images/bigteamgolflogo.png')} style={styles.logo} />
-        </View>
-
-        <Text style={styles.header}>{isSignUp ? 'SIGN UP' : 'LOGIN'}</Text>
-
-        {isSignUp && (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              value={firstName}
-              onChangeText={setFirstName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              value={lastName}
-              onChangeText={setLastName}
-            />
-          </>
-        )}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={username}
-          onChangeText={setUsername}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.passwordRequirements}>
-          Password must be at least 6 characters long.
-        </Text>
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={[styles.input, styles.passwordInput]}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Icon style={styles.icon} name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#000" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.formButtons}>
-          <TouchableOpacity onPress={handleSignIn}>
-            <Animated.View
-              style={[styles.button, { backgroundColor: loginButtonColor }]}
-            >
-              <Animated.Text style={[styles.buttonText, { color: loginTextColor }]}>
-                Login
-              </Animated.Text>
-            </Animated.View>
-          </TouchableOpacity>
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <Text style={styles.signUpText}>
-            Need to create an account?
-          </Text>
-          <TouchableOpacity onPress={toggleMode}>
-            <Animated.View
-              style={[
-                styles.button,
-                {
-                  backgroundColor: signUpButtonColor,
-                  borderColor: signUpButtonBorderColor,
-                  borderWidth: 2,
-                  marginTop: 10,
-                },
-              ]}
-            >
-              <Animated.Text style={[styles.buttonText, { color: signUpTextColor }]}>
-                Sign Up
-              </Animated.Text>
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
+    <ScrollView style={styles.formContainer}>
+      <View style={styles.logoContainer}>
+        <Image source={require('../assets/images/bigteamgolflogo_1.png')} style={styles.logo} />
       </View>
+
+      <Text style={styles.header}>{isSignUp ? 'SIGN UP' : 'LOGIN'}</Text>
+
+      {isSignUp && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+        </>
+      )}
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      {isSignUp ? <Text style={styles.passwordRequirements}>
+        Password must be at least 6 characters long.
+      </Text> : ""}
+
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={[styles.input, styles.passwordInput]}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Icon style={styles.icon} name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#000" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.formButtons}>
+        <TouchableOpacity onPress={handleLogin}>
+          <Animated.View
+            style={[styles.button, {
+              backgroundColor: loginButtonColor,
+              borderColor: '#3b873e',  // Always green border
+              borderWidth: 2,
+            }]}
+          >
+            <Animated.Text style={[styles.buttonText, { color: loginTextColor }]}>
+              Login
+            </Animated.Text>
+          </Animated.View>
+        </TouchableOpacity>
+
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <Text style={styles.createAccountText}>
+          Need to create an account?
+        </Text>
+        <TouchableOpacity onPress={handleSignUp}>
+          <Animated.View
+            style={[
+              styles.button,
+              {
+                backgroundColor: signUpButtonColor,
+                borderColor: signUpButtonBorderColor,
+                borderWidth: 2,
+                marginTop: 10,
+              },
+            ]}
+          >
+            <Animated.Text style={[styles.buttonText, { color: signUpTextColor }]}>
+              Sign Up
+            </Animated.Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-  },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
   },
   logo: {
-    width: 200,
-    height: 100,
-    resizeMode: 'contain',
+    width: 500,
+    height: 350,
+    resizeMode: 'stretch',
+    elevation: 3,
   },
   formContainer: {
     flex: 1,
     flexGrow: 1,
     backgroundColor: '#3b873e',
     borderRadius: 10,
-    padding: 20,
+    paddingTop: 0,
+    paddingRight: 20,
+    paddingBottom: 20,
+    paddingLeft: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 3,
   },
   header: {
     fontSize: 22,
@@ -218,7 +226,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 12,
     top: '50%',
-    transform: [{ translateY: -45 }], 
+    transform: [{ translateY: -45 }],
     zIndex: 1,
   },
   passwordInput: {
@@ -238,6 +246,7 @@ const styles = StyleSheet.create({
   },
   formButtons: {
     marginTop: 0,
+    marginBottom: 10,
     width: '100%',
   },
   button: {
@@ -247,9 +256,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
-  signUpText: {
+  createAccountText: {
     justifyContent: 'center',
-    alignItems:'center',
+    alignItems: 'center',
     color: '#ffffff',
     textAlign: 'center'
   },

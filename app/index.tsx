@@ -4,7 +4,8 @@ import CognitoAuth from '@/view-models/CognitoAuth';
 export default function HomeScreen() {  // Renamed for clarity
   return (
     <View style={styles.container}>
-      <Login cognitoAuth={CognitoAuth} />
+      {/* <Login cognitoAuth={CognitoAuth} /> */}
+      <Login cognitoAuth="" />
     </View>
   );
 }
