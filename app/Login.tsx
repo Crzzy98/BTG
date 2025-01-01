@@ -32,7 +32,11 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
       useNativeDriver: false,
     }).start();
 
-    await cognitoAuth.signIn(email, password);
+    try {
+      await cognitoAuth.signIn(email, password);
+    } catch (err) {
+      console.error('Sign in error:', err);
+    }
   };
 
   const handleSignUp = async () => {
@@ -51,7 +55,11 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
       useNativeDriver: false,
     }).start();
 
-    await cognitoAuth.signUp(email, password, email, firstName, lastName);
+    try{
+      await cognitoAuth.signUp(email, password, email, firstName, lastName);
+    }catch(err){
+      console.error('Sign up error:', err)
+    }
   };
 
   const loginButtonColor = transition.interpolate({
