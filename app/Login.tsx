@@ -20,6 +20,7 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoginToggled, setIsLoginToggled] = useState(false);
   const transition = new Animated.Value(0);
+  const MOCK_HANDICAP_VALUE = 1
 
   const handleLogin = async () => {
     if (isSignUp)
@@ -56,7 +57,9 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
     }).start();
 
     try{
-      await cognitoAuth.signUp(email, password, email, firstName, lastName);
+      await cognitoAuth.signUp(email, password, email,
+         firstName, lastName, ""); 
+      console.log("Sign up successful")
     }catch(err){
       console.error('Sign up error:', err)
     }

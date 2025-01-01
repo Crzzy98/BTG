@@ -3,7 +3,6 @@ import Login from './Login';
 import CognitoAuth from '@/view-models/CognitoAuth'
 
 //AWS config imports 
-import { Authenticator, useAuthenticator } from "@aws-amplify/ui-react-native";
 import { Amplify } from "aws-amplify";
 import outputs from "../amplify_outputs.json";
 
