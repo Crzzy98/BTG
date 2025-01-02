@@ -7,88 +7,44 @@ import {
   ScrollView,
   StyleSheet,
   Image,
-  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { Slider } from '@rneui/themed';
 
 const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [handicap, setHandicap] = useState(0);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoginToggled, setIsLoginToggled] = useState(false);
-  const transition = new Animated.Value(0);
-  const MOCK_HANDICAP_VALUE = 1
 
-  const handleLogin = async () => {
-    if (isSignUp)
-      setIsSignUp(!isSignUp);
-
-    // Transition back to login view after signing in
-    Animated.timing(transition, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-
-    try {
-      await cognitoAuth.signIn(email, password);
-    } catch (err) {
-      console.error('Sign in error:', err);
+  const handleFormSubmit = async () => {
+    if (isSignUp) {
+      if (password.length < 6) {
+        alert('Password must be at least 6 characters long.');
+        return;
+      }
+      try {
+        await cognitoAuth.signUp(email, password, email,
+          firstName, lastName, handicap.toString());
+        console.log("Sign up successful")
+      } catch (err) {
+        console.error('Sign up error:', err)
+      }
+    } else {
+      try {
+        await cognitoAuth.signIn(email, password);
+      } catch (err) {
+        console.error('Sign in error:', err);
+      }
     }
   };
 
-  const handleSignUp = async () => {
-    if (!isSignUp) {
-      setIsSignUp(!isSignUp);
-      return;
-    }
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters long.');
-      return;
-    }
-
-    Animated.timing(transition, {
-      toValue: isSignUp ? 0 : 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-
-    try{
-      await cognitoAuth.signUp(email, password, email,
-         firstName, lastName, ""); 
-      console.log("Sign up successful")
-    }catch(err){
-      console.error('Sign up error:', err)
-    }
+  const toggleForm = () => {
+    setIsSignUp(!isSignUp);
   };
-
-  const loginButtonColor = transition.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#ffffff', '#3b873e'], // white to green
-  });
-
-  const loginTextColor = transition.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#3b873e', '#ffffff'], // green to white
-  });
-
-  const signUpButtonColor = transition.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#3b873e', '#ffffff'],
-  });
-
-  const signUpTextColor = transition.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#ffffff', '#3b873e'],
-  });
-
-  const signUpButtonBorderColor = transition.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#ffffff', '#ffffff'], // White border when in sign-up mode
-  });
 
   return (
     <ScrollView style={styles.formContainer}>
@@ -112,6 +68,41 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
             value={lastName}
             onChangeText={setLastName}
           />
+          <View style={styles.handicapContainer}>
+            <Text style={styles.handicapLabel}>Handicap: {Math.round(handicap)}</Text>
+            <Slider
+              value={handicap}
+              onValueChange={setHandicap}
+              minimumValue={0}
+              maximumValue={50}
+              step={1}
+              allowTouchTrack
+              trackStyle={{ height: 5 }}
+              thumbStyle={{
+                height: 20,
+                width: 20,
+                backgroundColor: '#ffffff'
+              }}
+              minimumTrackTintColor="#ffffff"
+              maximumTrackTintColor="#000000"
+              thumbProps={{
+                children: (
+                  <View
+                    style={{
+                      height: 20,
+                      width: 20,
+                      backgroundColor: '#ffffff',
+                      borderRadius: 10,
+                    }}
+                  >
+                    <Text style={{ display: 'none' }}>
+                      {Math.round(handicap)}
+                    </Text>
+                  </View>
+                )
+              }}
+            />
+          </View>
         </>
       )}
 
@@ -124,9 +115,11 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
         autoCapitalize="none"
       />
 
-      {isSignUp ? <Text style={styles.passwordRequirements}>
-        Password must be at least 6 characters long.
-      </Text> : ""}
+      {isSignUp && (
+        <Text style={styles.passwordRequirements}>
+          Password must be at least 6 characters long.
+        </Text>
+      )}
 
       <View style={styles.passwordContainer}>
         <TextInput
@@ -137,23 +130,27 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
           secureTextEntry={!showPassword}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Icon style={styles.icon} name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#000" />
+          <Icon
+            style={styles.icon}
+            name={showPassword ? 'eye' : 'eye-slash'}
+            size={20}
+            color="#000"
+          />
         </TouchableOpacity>
       </View>
 
       <View style={styles.formButtons}>
-        <TouchableOpacity onPress={handleLogin}>
-          <Animated.View
-            style={[styles.button, {
-              backgroundColor: loginButtonColor,
-              borderColor: '#3b873e',  // Always green border
-              borderWidth: 2,
-            }]}
-          >
-            <Animated.Text style={[styles.buttonText, { color: loginTextColor }]}>
-              Login
-            </Animated.Text>
-          </Animated.View>
+        {/* Primary Button */}
+        <TouchableOpacity onPress={handleFormSubmit}>
+          <View style={[styles.button, {
+            backgroundColor: '#ffffff',
+            borderColor: '#3b873e',
+            borderWidth: 2,
+          }]}>
+            <Text style={[styles.buttonText, { color: '#3b873e' }]}>
+              {isSignUp ? 'Sign Up' : 'Login'}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.dividerContainer}>
@@ -163,24 +160,21 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
         </View>
 
         <Text style={styles.createAccountText}>
-          Need to create an account?
+          {isSignUp ? 'Already have an account?' : 'Need to create an account?'}
         </Text>
-        <TouchableOpacity onPress={handleSignUp}>
-          <Animated.View
-            style={[
-              styles.button,
-              {
-                backgroundColor: signUpButtonColor,
-                borderColor: signUpButtonBorderColor,
-                borderWidth: 2,
-                marginTop: 10,
-              },
-            ]}
-          >
-            <Animated.Text style={[styles.buttonText, { color: signUpTextColor }]}>
-              Sign Up
-            </Animated.Text>
-          </Animated.View>
+
+        {/* Secondary Button */}
+        <TouchableOpacity onPress={toggleForm}>
+          <View style={[styles.button, {
+            backgroundColor: '#3b873e',
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            marginTop: 10,
+          }]}>
+            <Text style={[styles.buttonText, { color: '#ffffff' }]}>
+              {isSignUp ? 'Login' : 'Sign Up'}
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -242,13 +236,7 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    paddingRight: 45, // Make room for the icon
-    backgroundColor: '#ffffff',
-    width: '100%',
+    paddingRight: 45,
   },
   passwordRequirements: {
     fontSize: 12,
@@ -279,18 +267,27 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 15,  // Spacing above and below the divider
+    marginVertical: 15,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ffffff',  // Match your design color
+    backgroundColor: '#ffffff',
   },
   dividerText: {
-    color: '#ffffff',  // Match your design color
-    paddingHorizontal: 10,  // Space between lines and text
+    color: '#ffffff',
+    paddingHorizontal: 10,
     fontSize: 16,
     fontWeight: '500',
+  },
+  handicapContainer: {
+    marginBottom: 15,
+    width: '100%',
+  },
+  handicapLabel: {
+    color: '#ffffff',
+    fontSize: 16,
+    marginBottom: 5,
   },
 });
 
