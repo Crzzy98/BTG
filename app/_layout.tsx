@@ -14,7 +14,6 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: 'index',
 };
 
@@ -27,7 +26,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -44,18 +42,40 @@ export default function RootLayout() {
 
   return <RootLayoutNav />;
 }
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
-  // //Routes defined
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        {/* Define the screens here */}
         <Stack.Screen 
           name="index" 
           options={{ 
             headerShown: false,
-            contentStyle: { backgroundColor: '#3b873e' }
+            contentStyle: { backgroundColor: '#3b873e' },
+          }} 
+        />
+        <Stack.Screen 
+          name="clubListView" 
+          options={{ 
+            title: 'Club List',
+            contentStyle: { backgroundColor: '#f5f5f5' },
+          }} 
+        />
+        <Stack.Screen 
+          name="createClubView" 
+          options={{ 
+            title: 'Create Club',
+            contentStyle: { backgroundColor: '#ffffff' },
+          }} 
+        />
+        <Stack.Screen 
+          name="clubDetailedView" 
+          options={{ 
+            title: 'Club Details',
+            contentStyle: { backgroundColor: '#ffffff' },
           }} 
         />
       </Stack>
