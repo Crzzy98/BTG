@@ -23,7 +23,8 @@ interface Props {
 }
 
 //Finish prop config
-const ClubListView = ({ player:Props.player, subscriptionTier:any }) => {
+// const ClubListView = ({ player, subscriptionTier}: {
+const ClubListView = () => {
   const [showJoinClubView, setShowJoinClubView] = useState(false);
   const navigation = useNavigation<NavigationProp>();
 
@@ -46,8 +47,8 @@ const ClubListView = ({ player:Props.player, subscriptionTier:any }) => {
         <FlatList
           data={[
             { id: 'create', name: 'Create Club +', isInvited: false },
-            ...player.clubInvites,
-            ...player.clubs,
+            // ...player.clubInvites,
+            // ...player.clubs,
           ]}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) =>
