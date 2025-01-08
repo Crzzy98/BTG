@@ -14,8 +14,8 @@ Amplify.configure(outputs);
 export default function HomeScreen() {
   return (
         <View style={styles.container}>
-          {/* <Login cognitoAuth={CognitoAuth} /> */}
-          <ClubListView></ClubListView>
+          <Login cognitoAuth={CognitoAuth} />
+          {/* <ClubListView></ClubListView> */}
         </View>
   );
 }
