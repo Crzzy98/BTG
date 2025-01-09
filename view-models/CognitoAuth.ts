@@ -1,17 +1,15 @@
 import {
-  signIn, signUp, confirmSignUp, resendSignUpCode,
+  signIn as amplifySignIn, signUp, confirmSignUp, resendSignUpCode,
   resetPassword, confirmResetPassword, updatePassword,
   deleteUser, signOut, getCurrentUser, fetchUserAttributes,
   fetchAuthSession, AuthError
 } from 'aws-amplify/auth';
 
+// import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
+
 import { Amplify } from 'aws-amplify';
 
-console.log('ENV VALUES:', {
-  userPoolId: process.env.EXPO_PUBLIC_USER_POOL_ID,
-  clientId: process.env.EXPO_PUBLIC_USER_POOL_CLIENT_ID
-});
-
+//Cognito Configuration
 Amplify.configure({
   Auth: {
     Cognito: {
@@ -127,7 +125,7 @@ const CognitoAuth = {
         console.log('No current user');
       }
 
-      const signInResult = await signIn({
+      const signInResult = await amplifySignIn({
         username,
         password,
         options: {
