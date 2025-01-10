@@ -24,7 +24,7 @@ interface Props {
 
 //Finish prop config
 // const ClubListView = ({ player, subscriptionTier}: {
-const ClubListView = () => {
+export const ClubListView = () => {
   const [showJoinClubView, setShowJoinClubView] = useState(false);
   const navigation = useNavigation<NavigationProp>();
 

@@ -129,7 +129,7 @@ const CognitoAuth = {
         username,
         password,
         options: {
-          authFlowType: 'USER_SRP_AUTH'
+          authFlowType: 'USER_PASSWORD_AUTH'
         }
       });
 
