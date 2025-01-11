@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  Animated 
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Slider } from '@rneui/themed';
@@ -20,6 +21,9 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [handicap, setHandicap] = useState(0);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [fadeAnim] = useState(new Animated.Value(1));
+
 
   // Add alert state
   const [alertVisible, setAlertVisible] = useState(false);
@@ -86,11 +90,15 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
           'Sign up successful! Please check your email for a verification link. You must verify your email before logging in.',
           'success'
         );
-        setIsSignUp(false);
-        setPassword('');
-        setFirstName('');
-        setLastName('');
-        setHandicap(0);
+        fadeOut();
+        setTimeout(() => {
+          setIsSignUp(false);
+          setPassword('');
+          setFirstName('');
+          setLastName('');
+          setHandicap(0);
+          fadeIn();
+        }, 200);
       } catch (err: any) {
         showAlert(err.message || 'Sign up error occurred', 'error');
         console.error('Sign up error:', err);
@@ -119,8 +127,28 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
     }
   };
 
+  const fadeOut = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const fadeIn = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+  
   const toggleForm = () => {
-    setIsSignUp(!isSignUp);
+    fadeOut();
+    setTimeout(() => {
+      setIsSignUp(!isSignUp);
+      fadeIn();
+    }, 200);
   };
 
   return (
@@ -131,137 +159,139 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
         type={alertType}
         onClose={() => setAlertVisible(false)}
       />
-
+  
       <View style={styles.logoContainer}>
         <Image source={require('../assets/images/bigteamgolflogo_1.png')} style={styles.logo} />
       </View>
-
-      <Text style={styles.header}>{isSignUp ? 'SIGN UP' : 'LOGIN'}</Text>
-
-      {isSignUp && (
-        <>
-          <TextInput
-            style={styles.input}
-            placeholder="First Name"
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Last Name"
-            value={lastName}
-            onChangeText={setLastName}
-          />
-          <View style={styles.handicapContainer}>
-            <Text style={styles.handicapLabel}>Handicap: {Math.round(handicap)}</Text>
-            <Slider
-              value={handicap}
-              onValueChange={setHandicap}
-              minimumValue={0}
-              maximumValue={50}
-              step={1}
-              allowTouchTrack
-              trackStyle={{ height: 5 }}
-              thumbStyle={{
-                height: 20,
-                width: 20,
-                backgroundColor: '#ffffff'
-              }}
-              minimumTrackTintColor="#ffffff"
-              maximumTrackTintColor="#000000"
-              thumbProps={{
-                children: (
-                  <View
-                    style={{
-                      height: 20,
-                      width: 20,
-                      backgroundColor: '#ffffff',
-                      borderRadius: 10,
-                    }}
-                  >
-                    <Text style={{ display: 'none' }}>
-                      {Math.round(handicap)}
-                    </Text>
-                  </View>
-                )
-              }}
+  
+      <Animated.View style={{ opacity: fadeAnim }}>
+        <Text style={styles.header}>{isSignUp ? 'SIGN UP' : 'LOGIN'}</Text>
+  
+        {isSignUp && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
             />
-          </View>
-        </>
-      )}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      {isSignUp && (
-        <Text style={styles.passwordRequirements}>
-          Password must be at least 6 characters long.
-        </Text>
-      )}
-
-      <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+            <View style={styles.handicapContainer}>
+              <Text style={styles.handicapLabel}>Handicap: {Math.round(handicap)}</Text>
+              <Slider
+                value={handicap}
+                onValueChange={setHandicap}
+                minimumValue={0}
+                maximumValue={50}
+                step={1}
+                allowTouchTrack
+                trackStyle={{ height: 5 }}
+                thumbStyle={{
+                  height: 20,
+                  width: 20,
+                  backgroundColor: '#ffffff'
+                }}
+                minimumTrackTintColor="#ffffff"
+                maximumTrackTintColor="#000000"
+                thumbProps={{
+                  children: (
+                    <View
+                      style={{
+                        height: 20,
+                        width: 20,
+                        backgroundColor: '#ffffff',
+                        borderRadius: 10,
+                      }}
+                    >
+                      <Text style={{ display: 'none' }}>
+                        {Math.round(handicap)}
+                      </Text>
+                    </View>
+                  )
+                }}
+              />
+            </View>
+          </>
+        )}
+  
         <TextInput
-          style={[styles.input, styles.passwordInput]}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Icon
-            style={styles.icon}
-            name={showPassword ? 'eye' : 'eye-slash'}
-            size={20}
-            color="#000"
+  
+        {isSignUp && (
+          <Text style={styles.passwordRequirements}>
+            Password must be at least 6 characters long.
+          </Text>
+        )}
+  
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
           />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.formButtons}>
-        <TouchableOpacity onPress={handleFormSubmit}>
-          <View style={[styles.button, {
-            backgroundColor: '#ffffff',
-            borderColor: '#3b873e',
-            borderWidth: 2,
-          }]}>
-            <Text style={[styles.buttonText, { color: '#3b873e' }]}>
-              {isSignUp ? 'Sign Up' : 'Login'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Icon
+              style={styles.icon}
+              name={showPassword ? 'eye' : 'eye-slash'}
+              size={20}
+              color="#000"
+            />
+          </TouchableOpacity>
         </View>
-
-        <Text style={styles.createAccountText}>
-          {isSignUp ? 'Already have an account?' : 'Need to create an account?'}
-        </Text>
-
-        <TouchableOpacity onPress={toggleForm}>
-          <View style={[styles.button, {
-            backgroundColor: '#3b873e',
-            borderColor: '#ffffff',
-            borderWidth: 2,
-            marginTop: 10,
-          }]}>
-            <Text style={[styles.buttonText, { color: '#ffffff' }]}>
-              {isSignUp ? 'Login' : 'Sign Up'}
-            </Text>
+  
+        <View style={styles.formButtons}>
+          <TouchableOpacity onPress={handleFormSubmit}>
+            <View style={[styles.button, {
+              backgroundColor: '#ffffff',
+              borderColor: '#3b873e',
+              borderWidth: 2,
+            }]}>
+              <Text style={[styles.buttonText, { color: '#3b873e' }]}>
+                {isSignUp ? 'Sign Up' : 'Login'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+  
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
           </View>
-        </TouchableOpacity>
-      </View>
+  
+          <Text style={styles.createAccountText}>
+            {isSignUp ? 'Already have an account?' : 'Need to create an account?'}
+          </Text>
+  
+          <TouchableOpacity onPress={toggleForm}>
+            <View style={[styles.button, {
+              backgroundColor: '#3b873e',
+              borderColor: '#ffffff',
+              borderWidth: 2,
+              marginTop: 10,
+            }]}>
+              <Text style={[styles.buttonText, { color: '#ffffff' }]}>
+                {isSignUp ? 'Login' : 'Sign Up'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </ScrollView>
   );
-};
+}  
 
 const styles = StyleSheet.create({
   logoContainer: {
