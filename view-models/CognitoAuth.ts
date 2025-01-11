@@ -1,7 +1,7 @@
 import {
   signIn as amplifySignIn, signUp, confirmSignUp, resendSignUpCode,
   resetPassword, confirmResetPassword, updatePassword,
-  deleteUser, signOut, getCurrentUser, fetchUserAttributes,
+  deleteUser, signOut, getCurrentUser, fetchUserAttributes,FetchUserAttributesOutput,
   fetchAuthSession, AuthError
 } from 'aws-amplify/auth';
 
@@ -28,6 +28,13 @@ interface Credentials {
   idToken: string;
   refreshToken: string;
   sub: string | undefined;
+}
+
+interface CurrentUser {
+  userId: string;
+  username: string;
+  email?: string;
+  attributes?: FetchUserAttributesOutput;
 }
 
 const AUTO_LOGOUT_TIME = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -93,16 +100,24 @@ const CognitoAuth = {
     }
   },
 
-  async getCurrentUser() {
+  async getCurrentUser(): Promise<CurrentUser | null> {
     try {
       const currentUser = await getCurrentUser();
-      return currentUser;
+      if (currentUser) {
+        const attributes = await fetchUserAttributes();
+        return {
+          userId: currentUser.userId,
+          username: currentUser.username,
+          email: attributes.email,
+          attributes: attributes
+        };
+      }
+      return null;
     } catch (err) {
-      console.log('No current user found');
+      console.log('Error getting current user:', err);
       return null;
     }
   },
-
   async signUp(
     username: string,
     password: string,

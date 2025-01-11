@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Slider } from '@rneui/themed';
+import AlertModal from './view-components/AlertModal';
 
 const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [email, setEmail] = useState('');
@@ -20,9 +21,21 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Add alert state
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
+
   useEffect(() => {
     checkCurrentUser();
   }, []);
+
+  // Add showAlert helper function
+  const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'error') => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setAlertVisible(true);
+  };
 
   const checkCurrentUser = async () => {
     try {
@@ -38,23 +51,25 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const handleFormSubmit = async () => {
     if (isSignUp) {
       if (password.length < 6) {
-        alert('Password must be at least 6 characters long.');
+        showAlert('Password must be at least 6 characters long.', 'warning');
         return;
       }
       try {
         await cognitoAuth.signUp(email, password, email,
           firstName, lastName, handicap.toString());
-        console.log("Sign up successful")
-      } catch (err) {
+        showAlert("Sign up successful! Please check your email to verify your account.", 'success');
+      } catch (err: any) {
+        showAlert(err.message || 'Sign up error occurred', 'error');
         console.error('Sign up error:', err)
       }
     } else {
       try {
         // First try to sign out if there's an existing session
         await cognitoAuth.signOutLocally();
-
         await cognitoAuth.signIn(email, password);
-      } catch (err) {
+        showAlert('Login successful!', 'success');
+      } catch (err: any) {
+        showAlert(err.message || 'Login error occurred', 'error');
         console.error('Sign in error:', err);
       }
     }
@@ -66,6 +81,13 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
 
   return (
     <ScrollView style={styles.formContainer}>
+      <AlertModal
+        visible={alertVisible}
+        message={alertMessage}
+        type={alertType}
+        onClose={() => setAlertVisible(false)}
+      />
+
       <View style={styles.logoContainer}>
         <Image source={require('../assets/images/bigteamgolflogo_1.png')} style={styles.logo} />
       </View>
@@ -158,7 +180,6 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
       </View>
 
       <View style={styles.formButtons}>
-        {/* Primary Button */}
         <TouchableOpacity onPress={handleFormSubmit}>
           <View style={[styles.button, {
             backgroundColor: '#ffffff',
@@ -181,7 +202,6 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
           {isSignUp ? 'Already have an account?' : 'Need to create an account?'}
         </Text>
 
-        {/* Secondary Button */}
         <TouchableOpacity onPress={toggleForm}>
           <View style={[styles.button, {
             backgroundColor: '#3b873e',
