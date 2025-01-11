@@ -5,11 +5,11 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
+import { AppState } from 'react-native'; // Add this import
 import { useColorScheme } from '@/components/useColorScheme';
+import CognitoAuth from '../view-models/CognitoAuth'; // Add this import
 
 export {
-  // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
 
@@ -17,7 +17,6 @@ export const unstable_settings = {
   initialRouteName: 'index',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -36,6 +35,19 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // Add the auto-logout effect
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active' && CognitoAuth.loggedIn) {
+        CognitoAuth.resetAutoLogoutTimer();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   if (!loaded) {
     return null;
   }
@@ -49,7 +61,6 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        {/* Define the screens here */}
         <Stack.Screen 
           name="index" 
           options={{ 

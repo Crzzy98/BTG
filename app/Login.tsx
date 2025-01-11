@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,21 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    checkCurrentUser();
+  }, []);
+
+  const checkCurrentUser = async () => {
+    try {
+      const currentUser = await cognitoAuth.getCurrentUser();
+      if (currentUser) {
+        setEmail(currentUser.loginId || '');
+      }
+    } catch (err) {
+      console.log('No current user found');
+    }
+  };
+
   const handleFormSubmit = async () => {
     if (isSignUp) {
       if (password.length < 6) {
@@ -35,6 +50,9 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
       }
     } else {
       try {
+        // First try to sign out if there's an existing session
+        await cognitoAuth.signOutLocally();
+
         await cognitoAuth.signIn(email, password);
       } catch (err) {
         console.error('Sign in error:', err);

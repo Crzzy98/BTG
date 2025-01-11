@@ -5,8 +5,7 @@ import {
   fetchAuthSession, AuthError
 } from 'aws-amplify/auth';
 
-// import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Amplify } from 'aws-amplify';
 
 //Cognito Configuration
@@ -31,6 +30,9 @@ interface Credentials {
   sub: string | undefined;
 }
 
+const AUTO_LOGOUT_TIME = 30 * 60 * 1000; // 30 minutes in milliseconds
+let autoLogoutTimer: NodeJS.Timeout | null = null;
+
 const CognitoAuth = {
   error: null as Error | null,
   success: false,
@@ -42,17 +44,44 @@ const CognitoAuth = {
     this.fetchCurrentAuthSession();
   },
 
+  async startAutoLogoutTimer() {
+    if (autoLogoutTimer) {
+      clearTimeout(autoLogoutTimer);
+    }
+
+    autoLogoutTimer = setTimeout(async () => {
+      try {
+        await this.signOutLocally();
+        console.log('Auto logout executed');
+      } catch (err) {
+        console.error('Auto logout error:', err);
+      }
+    }, AUTO_LOGOUT_TIME);
+  },
+
+  async resetAutoLogoutTimer() {
+    await this.startAutoLogoutTimer();
+  },
+
+  clearAutoLogoutTimer() {
+    if (autoLogoutTimer) {
+      clearTimeout(autoLogoutTimer);
+      autoLogoutTimer = null;
+    }
+  },
+
   async fetchCurrentAuthSession(): Promise<void> {
     try {
       const { tokens } = await fetchAuthSession();
       if (tokens?.accessToken && tokens?.idToken) {
-        this.setCredentials({
+        await this.setCredentials({
           accessToken: tokens.accessToken.toString(),
           idToken: tokens.idToken.toString(),
           refreshToken: '',
           sub: tokens.idToken.payload.sub
         });
         this.loggedIn = true;
+        await this.startAutoLogoutTimer();
       } else {
         this.loggedIn = false;
       }
@@ -61,6 +90,16 @@ const CognitoAuth = {
       console.error('Error fetching session:', err);
       this.error = err as Error;
       this.loggedIn = false;
+    }
+  },
+
+  async getCurrentUser() {
+    try {
+      const currentUser = await getCurrentUser();
+      return currentUser;
+    } catch (err) {
+      console.log('No current user found');
+      return null;
     }
   },
 
@@ -118,9 +157,13 @@ const CognitoAuth = {
 
       console.log('Starting sign in process...', { username });
 
+      // Check for existing session and sign out if necessary
       try {
         const currentUser = await getCurrentUser();
-        console.log('Current user found:', currentUser);
+        if (currentUser) {
+          console.log('Current user found:', currentUser);
+          await this.signOutLocally();
+        }
       } catch (e) {
         console.log('No current user');
       }
@@ -144,6 +187,7 @@ const CognitoAuth = {
 
         this.loggedIn = true;
         await this.fetchCurrentAuthSession();
+        await this.startAutoLogoutTimer();
       } else if (signInResult.nextStep) {
         console.log('Additional step required:', signInResult.nextStep.signInStep);
         
@@ -264,12 +308,13 @@ const CognitoAuth = {
 
   async signOutLocally(): Promise<void> {
     try {
+      this.clearAutoLogoutTimer();
       await signOut();
       this.loggedIn = false;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('idToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('sub');
+      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem('idToken');
+      await AsyncStorage.removeItem('refreshToken');
+      await AsyncStorage.removeItem('sub');
     } catch (err) {
       console.error('Sign out error:', err);
       this.error = err as Error;
@@ -277,24 +322,33 @@ const CognitoAuth = {
     }
   },
 
-  setCredentials({ accessToken, idToken, refreshToken, sub }: Credentials): void {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('idToken', idToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('sub', `${sub || "undefined"}`);
+  async setCredentials({ accessToken, idToken, refreshToken, sub }: Credentials): Promise<void> {
+    try {
+      await AsyncStorage.setItem('accessToken', accessToken);
+      await AsyncStorage.setItem('idToken', idToken);
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+      await AsyncStorage.setItem('sub', `${sub || "undefined"}`);
+    } catch (error) {
+      console.error('Error saving credentials:', error);
+      throw error;
+    }
   },
 
-  getCredentials(): Credentials | null {
-    const accessToken = localStorage.getItem('accessToken');
-    const idToken = localStorage.getItem('idToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-    const sub = localStorage.getItem('sub');
+  async getCredentials(): Promise<Credentials | null> {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const idToken = await AsyncStorage.getItem('idToken');
+      const refreshToken = await AsyncStorage.getItem('refreshToken');
+      const sub = await AsyncStorage.getItem('sub');
 
-    if (accessToken && idToken && refreshToken && sub) {
-      return { accessToken, idToken, refreshToken, sub };
+      if (accessToken && idToken && refreshToken && sub) {
+        return { accessToken, idToken, refreshToken, sub };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting credentials:', error);
+      return null;
     }
-
-    return null;
   },
 };
 
