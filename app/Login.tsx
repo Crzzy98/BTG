@@ -48,28 +48,72 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
     }
   };
 
+  const validateSignupForm = () => {
+    if (!email || !password || !firstName || !lastName) {
+      showAlert('Please fill in all required fields', 'error');
+      return false;
+    }
+  
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showAlert('Please enter a valid email address', 'error');
+      return false;
+    }
+  
+    if (password.length < 6) {
+      showAlert('Password must be at least 6 characters long', 'warning');
+      return false;
+    }
+  
+    return true;
+  };
+  
   const handleFormSubmit = async () => {
     if (isSignUp) {
-      if (password.length < 6) {
-        showAlert('Password must be at least 6 characters long.', 'warning');
+      if (!validateSignupForm()) {
         return;
       }
       try {
-        await cognitoAuth.signUp(email, password, email,
-          firstName, lastName, handicap.toString());
-        showAlert("Sign up successful! Please check your email to verify your account.", 'success');
+        await cognitoAuth.signUp(
+          email, 
+          password, 
+          email,
+          firstName, 
+          lastName, 
+          handicap.toString()
+        );
+        showAlert(
+          'Sign up successful! Please check your email for a verification link. You must verify your email before logging in.',
+          'success'
+        );
+        setIsSignUp(false);
+        setPassword('');
+        setFirstName('');
+        setLastName('');
+        setHandicap(0);
       } catch (err: any) {
         showAlert(err.message || 'Sign up error occurred', 'error');
-        console.error('Sign up error:', err)
+        console.error('Sign up error:', err);
       }
     } else {
+      if (!email || !password) {
+        showAlert('Please enter both email and password', 'error');
+        return;
+      }
       try {
-        // First try to sign out if there's an existing session
         await cognitoAuth.signOutLocally();
         await cognitoAuth.signIn(email, password);
         showAlert('Login successful!', 'success');
       } catch (err: any) {
-        showAlert(err.message || 'Login error occurred', 'error');
+        let errorMessage = 'Login error occurred';
+        if (err.message.includes('User is not confirmed')) {
+          errorMessage = 'Please verify your email before logging in. Check your inbox for the verification link.';
+        } else if (err.message.includes('Incorrect username or password')) {
+          errorMessage = 'Incorrect email or password';
+        } else {
+          errorMessage = err.message;
+        }
+        showAlert(errorMessage, 'error');
         console.error('Sign in error:', err);
       }
     }
@@ -326,6 +370,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     marginBottom: 5,
+  },
+  inputError: {
+    borderColor: '#ff6b6b',
+    borderWidth: 1,
   },
 });
 
