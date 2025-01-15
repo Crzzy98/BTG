@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import Login from './Login';
+import Login from './views/Login';
 import CognitoAuth from '@/view-models/CognitoAuth'
 
 //Dev View 
@@ -14,8 +14,8 @@ Amplify.configure(outputs);
 export default function HomeScreen() {
   return (
         <View style={styles.container}>
-          <Login cognitoAuth={CognitoAuth} />
-          {/* <ClubListView></ClubListView> */}
+          {/* <Login cognitoAuth={CognitoAuth} /> */}
+          <ClubListView></ClubListView>
         </View>
   );
 }

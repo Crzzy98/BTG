@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, FlatList, StyleSheet, Animated } from 'react-native';
 import { useNavigation } from 'expo-router';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../constants/types';
-
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'clubListView'>;
+import PaywallView from '../view-components/PayWallView';
 
 interface Club {
   id: string;
@@ -27,6 +27,21 @@ interface Props {
 export const ClubListView = () => {
   const [showJoinClubView, setShowJoinClubView] = useState(false);
   const navigation = useNavigation<NavigationProp>();
+  const [isPro, setIsPro] = useState(false);
+
+  const slideAnim = new Animated.Value(1000); // Start from below the screen
+
+  useEffect(() => {
+    if (!isPro) {
+      // Slide up animation
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        speed: 12,
+        bounciness: 8
+      }).start();
+    }
+  }, [isPro]);
 
   const renderClubRow = (club: Club, isNavigable: boolean) => (
     <TouchableOpacity
@@ -47,8 +62,6 @@ export const ClubListView = () => {
         <FlatList
           data={[
             { id: 'create', name: 'Create Club +', isInvited: false },
-            // ...player.clubInvites,
-            // ...player.clubs,
           ]}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) =>
@@ -65,15 +78,48 @@ export const ClubListView = () => {
           }
         />
       </ScrollView>
+
+      {/* Paywall Overlay */}
+      {!isPro && (
+        <Animated.View
+          style={[
+            styles.paywallContainer,
+            {
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <PaywallView />
+        </Animated.View>
+      )}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#006400',
     padding: 10,
+  },
+  paywallContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '90%', // Adjust this value to control how much of the screen the paywall covers
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -3,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   createClubCard: {
     flex: 1,

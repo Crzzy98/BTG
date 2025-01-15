@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Slider } from '@rneui/themed';
-import AlertModal from './view-components/AlertModal';
+import AlertModal from '../view-components/AlertModal';
 
 const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
   const [email, setEmail] = useState('');
@@ -161,7 +161,7 @@ const Login = ({ cognitoAuth }: { cognitoAuth: any }) => {
       />
   
       <View style={styles.logoContainer}>
-        <Image source={require('../assets/images/bigteamgolflogo_1.png')} style={styles.logo} />
+        <Image source={require('../../assets/images/bigteamgolflogo_1.png')} style={styles.logo} />
       </View>
   
       <Animated.View style={{ opacity: fadeAnim }}>
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 500,
-    height: 350,
+    height: 400,
     resizeMode: 'stretch',
     elevation: 3,
   },
