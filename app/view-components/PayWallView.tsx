@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import InAppPurchases from 'react-native-iap'; //For in app purchases
 import { useNavigation } from '@react-navigation/native';
+import { mockProducts } from './mockProducts';
 
 interface Product {
   productId: string;
@@ -28,9 +29,14 @@ const PaywallView = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const items = await InAppPurchases.getProducts({ skus: productIDs });
-        setProducts(items);
+        // const items = await InAppPurchases.getProducts({ skus: productIDs });
+
+          // Simulate network delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        // setProducts(items);
+        setProducts(mockProducts);
         setLoading(false);
+        
       } catch (error) {
         console.error('Error fetching products:', error);
         Alert.alert('Error', 'Failed to fetch products.');
