@@ -69,21 +69,21 @@ function RootLayoutNav() {
           }} 
         />
         <Stack.Screen 
-          name="clubListView" 
+          name="ClubListView" 
           options={{ 
             title: 'Club List',
             contentStyle: { backgroundColor: '#f5f5f5' },
           }} 
         />
         <Stack.Screen 
-          name="createClubView" 
+          name="CreateClubView" 
           options={{ 
             title: 'Create Club',
             contentStyle: { backgroundColor: '#ffffff' },
           }} 
         />
         <Stack.Screen 
-          name="clubDetailedView" 
+          name="ClubDetailedView" 
           options={{ 
             title: 'Club Details',
             contentStyle: { backgroundColor: '#ffffff' },

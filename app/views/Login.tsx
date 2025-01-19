@@ -92,7 +92,7 @@ export default function Login({ cognitoAuth }: LoginProps) {
         await cognitoAuth.signIn(email, password);
         showAlert('Login successful!', 'success');
         setTimeout(() => {
-          router.replace('./CreateClubView');
+          router.replace('./ClubListView');
         }, 1000);
       } catch (err: any) {
         showAlert(err.message, 'error');
