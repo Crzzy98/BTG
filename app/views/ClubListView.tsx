@@ -31,17 +31,17 @@ export const ClubListView = () => {
 
   const slideAnim = new Animated.Value(1000); // Start from below the screen
 
-  useEffect(() => {
-    if (!isPro) {
-      // Slide up animation
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        speed: 12,
-        bounciness: 8
-      }).start();
-    }
-  }, [isPro]);
+  // useEffect(() => {
+  //   if (!isPro) {
+  //     // Slide up animation
+  //     Animated.spring(slideAnim, {
+  //       toValue: 0,
+  //       useNativeDriver: true,
+  //       speed: 12,
+  //       bounciness: 8
+  //     }).start();
+  //   }
+  // }, [isPro]);
 
   const renderClubRow = (club: Club, isNavigable: boolean) => (
     <TouchableOpacity
@@ -80,7 +80,7 @@ export const ClubListView = () => {
       </ScrollView>
 
       {/* Paywall Overlay */}
-      {!isPro && (
+      {/* {!isPro && (
         <Animated.View
           style={[
             styles.paywallContainer,
@@ -91,7 +91,7 @@ export const ClubListView = () => {
         >
           <PaywallView />
         </Animated.View>
-      )}
+      )} */}
     </View>
   );
 };

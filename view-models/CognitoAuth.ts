@@ -164,6 +164,7 @@ const CognitoAuth = {
     }
   },
 
+  // Sign in Method 
   async signIn(username: string, password: string): Promise<void> {
     try {
       if (!username || !password) {
@@ -183,6 +184,7 @@ const CognitoAuth = {
         console.log('No current user');
       }
 
+      //Amplify sign-in begins 
       const signInResult = await amplifySignIn({
         username,
         password,
