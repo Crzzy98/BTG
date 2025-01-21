@@ -54,11 +54,11 @@ export default function ClubListView({ player, subscriptionTier }: ClubListViewP
       if (clubs.length >= clubLimit) {
         setShowPaywall(true);
       } else {
-        router.push('./CreateClubView');
+        router.push('/views/CreateClubView');
       }
     } else {
       router.push({
-        pathname: './ClubDetailedView',
+        pathname: '/views/CreateClubView',
         params: { clubId: club.id }
       });
     }
