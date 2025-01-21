@@ -1,153 +1,279 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList, StyleSheet, Animated } from 'react-native';
-import { useNavigation } from 'expo-router';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../constants/types';
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'clubListView'>;
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  FlatList, 
+  StyleSheet, 
+  ImageBackground,
+  Dimensions,
+  Platform,
+  RefreshControl
+} from 'react-native';
+import { router } from 'expo-router';
 import PaywallView from '../view-components/PayWallView';
+
+const { width } = Dimensions.get('window');
 
 interface Club {
   id: string;
   name: string;
   isInvited: boolean;
+  memberCount?: number;
+  role?: string;
 }
 
-interface Props {
-  player: {
+interface ClubListViewProps {
+  player?: {
     clubs: Club[];
     clubInvites: Club[];
   };
-  subscriptionTier: {
+  subscriptionTier?: {
     clubLimit: number;
   };
 }
 
-//Finish prop config
-// const ClubListView = ({ player, subscriptionTier}: {
-export const ClubListView = () => {
-  const [showJoinClubView, setShowJoinClubView] = useState(false);
-  const navigation = useNavigation<NavigationProp>();
-  const [isPro, setIsPro] = useState(false);
+export default function ClubListView({ player, subscriptionTier }: ClubListViewProps) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
-  const slideAnim = new Animated.Value(1000); // Start from below the screen
+  const clubs = player?.clubs || [];
+  const clubInvites = player?.clubInvites || [];
+  const clubLimit = subscriptionTier?.clubLimit || 1;
 
-  useEffect(() => {
-    if (!isPro) {
-      // Slide up animation
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        speed: 12,
-        bounciness: 8
-      }).start();
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Implement your refresh logic here
+    // await refreshClubs();
+    setRefreshing(false);
+  };
+
+  const handleClubPress = (club: Club) => {
+    if (club.id === 'create') {
+      if (clubs.length >= clubLimit) {
+        setShowPaywall(true);
+      } else {
+        router.push('/views/CreateClubView');
+      }
+    } else {
+      router.push({
+        pathname: '/views/CreateClubView',
+        params: { clubId: club.id }
+      });
     }
-  }, [isPro]);
+  };
 
-  const renderClubRow = (club: Club, isNavigable: boolean) => (
+  const renderCreateClubButton = () => (
+    <TouchableOpacity
+      style={styles.createClubCard}
+      onPress={() => handleClubPress({ id: 'create', name: 'Create Club', isInvited: false })}
+    >
+      <ImageBackground
+        source={require('../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
+        style={styles.cardBackground}
+        imageStyle={styles.cardBackgroundImage}
+      >
+        <View style={styles.cardOverlay}>
+          <Text style={styles.createClubText}>Create Club +</Text>
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
+
+  const renderClubCard = ({ item }: { item: Club }) => (
     <TouchableOpacity
       style={styles.clubCard}
-      onPress={() => {
-        if (isNavigable) {
-          navigation.navigate('clubDetailedView', { club });
-        }
-      }}
+      onPress={() => handleClubPress(item)}
     >
-      <Text style={styles.clubName}>{club.name}</Text>
+      <ImageBackground
+        source={require('../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
+        style={styles.cardBackground}
+        imageStyle={styles.cardBackgroundImage}
+      >
+        <View style={styles.cardOverlay}>
+          <Text style={styles.clubName}>{item.name}</Text>
+          {item.memberCount && (
+            <Text style={styles.memberCount}>
+              {item.memberCount} Members
+            </Text>
+          )}
+          {item.role && (
+            <View style={styles.roleTag}>
+              <Text style={styles.roleText}>{item.role}</Text>
+            </View>
+          )}
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
+
+  const renderInviteCard = ({ item }: { item: Club }) => (
+    <TouchableOpacity
+      style={styles.inviteCard}
+      onPress={() => handleClubPress(item)}
+    >
+      <ImageBackground
+        source={require('../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
+        style={styles.cardBackground}
+        imageStyle={styles.cardBackgroundImage}
+      >
+        <View style={styles.cardOverlay}>
+          <Text style={styles.clubName}>{item.name}</Text>
+          <Text style={styles.inviteText}>Club Invite</Text>
+        </View>
+      </ImageBackground>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <FlatList
-          data={[
-            { id: 'create', name: 'Create Club +', isInvited: false },
-          ]}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) =>
-            item.id === 'create' ? (
-              <TouchableOpacity
-                style={styles.createClubCard}
-                onPress={() => navigation.navigate('createClubView')}
-              >
-                <Text style={styles.createClubText}>Create Club +</Text>
-              </TouchableOpacity>
-            ) : (
-              renderClubRow(item, item.isInvited)
-            )
-          }
-        />
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+          />
+        }
+      >
+        {clubInvites.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Club Invites</Text>
+            <FlatList
+              data={clubInvites}
+              renderItem={renderInviteCard}
+              keyExtractor={(item) => `invite-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Clubs</Text>
+          {renderCreateClubButton()}
+          <FlatList
+            data={clubs}
+            renderItem={renderClubCard}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+          />
+        </View>
       </ScrollView>
 
-      {/* Paywall Overlay */}
-      {!isPro && (
-        <Animated.View
-          style={[
-            styles.paywallContainer,
-            {
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <PaywallView />
-        </Animated.View>
+      {showPaywall && (
+        <PaywallView
+          onClose={() => setShowPaywall(false)}
+          currentLimit={clubLimit}
+        />
       )}
     </View>
   );
-};
-
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#006400',
-    padding: 10,
   },
-  paywallContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '90%', // Adjust this value to control how much of the screen the paywall covers
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+  section: {
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  horizontalList: {
+    paddingRight: 16,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
   },
   createClubCard: {
-    flex: 1,
-    height: 200,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 5,
-    borderRadius: 20,
-  },
-  createClubText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    width: width - 32,
+    height: 150,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   clubCard: {
+    width: (width - 48) / 2,
+    height: 180,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  inviteCard: {
+    width: 200,
+    height: 120,
+    marginRight: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  cardBackground: {
     flex: 1,
-    height: 200,
-    backgroundColor: '#ccc',
+    justifyContent: 'center',
+  },
+  cardBackgroundImage: {
+    resizeMode: 'cover',
+  },
+  cardOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 5,
-    borderRadius: 20,
+  },
+  createClubText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+    letterSpacing: 1,
   },
   clubName: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  memberCount: {
+    fontSize: 14,
+    color: '#fff',
+    marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  roleTag: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#006400',
+  },
+  inviteText: {
+    fontSize: 14,
+    color: '#FFD700',
+    marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
 });
-
-export default ClubListView;

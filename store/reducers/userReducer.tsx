@@ -1,14 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { User, Club } from '../types';
 
 interface UserState {
-  currentUser: User | null;
+  isPro: boolean;
+  userName: string | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: UserState = {
-  currentUser: null,
+  isPro: false,
+  userName: null,
   loading: false,
   error: null,
 };
@@ -17,9 +18,12 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User>) => {
-      state.currentUser = action.payload;
+    setUserName: (state, action: PayloadAction<string>) => {
+      state.userName = action.payload;
       state.error = null;
+    },
+    setProStatus: (state, action: PayloadAction<boolean>) => {
+      state.isPro = action.payload;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -27,17 +31,20 @@ const userSlice = createSlice({
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
     },
-    updateProStatus: (state, action: PayloadAction<boolean>) => {
-      if (state.currentUser) {
-        state.currentUser.isPro = action.payload;
-      }
-    },
     logout: (state) => {
-      state.currentUser = null;
+      state.isPro = false;
+      state.userName = null;
       state.error = null;
     },
   },
 });
 
-export const { setUser, setLoading, setError, updateProStatus, logout } = userSlice.actions;
+export const { 
+  setUserName, 
+  setProStatus, 
+  setLoading, 
+  setError, 
+  logout 
+} = userSlice.actions;
+
 export default userSlice.reducer;

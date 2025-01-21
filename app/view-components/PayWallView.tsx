@@ -17,8 +17,12 @@ interface Product {
   title: string;
   localizedPrice: string;
 }
+interface PaywallViewProps {
+  onClose: () => void;
+  currentLimit: number;
+}
 
-const PaywallView = () => {
+const PaywallView = ({ onClose, currentLimit }: PaywallViewProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
