@@ -1,3 +1,6 @@
+// CreateClubView.tsx
+'use client';
+
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -13,13 +16,12 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
-import { useStore } from 'react-redux';
 import * as InAppPurchases from 'react-native-iap';
-import { Store } from 'redux';
+import { useMain, useClub, Club } from '../context';
+import PurchaseModal from '../view-components/PurchaseModal';
 
 const { width } = Dimensions.get('window');
 
-// Define types for the tier products
 interface TierProduct {
   id: string;
   name: string;
@@ -27,7 +29,6 @@ interface TierProduct {
   price: string;
 }
 
-// Mock data with proper typing
 const TIER_PRODUCTS: TierProduct[] = [
   { id: '1star.club.create', name: 'Basic Club', limit: 10, price: '$4.99' },
   { id: '2star.club.create', name: 'Standard Club', limit: 20, price: '$9.99' },
@@ -36,85 +37,80 @@ const TIER_PRODUCTS: TierProduct[] = [
   { id: '5star.club.create', name: 'Elite Club', limit: 50, price: '$24.99' },
 ];
 
-// Types
-interface Player {
-  id: string;
-}
-
-interface AppStore extends Store {
-  player?: Player;
-  createClub: (club: ClubCreate, callback: (success: boolean) => void) => void;
-  getPlayer: (playerId: string, callback: (success: boolean) => void) => void;
-}
-
-interface ClubCreate {
-  name: string;
-  id: null;
-  superAdmin: string | undefined;
-  admins: string[];
-  birdieWeight: number;
-  clubLimit: number;
-  password: string;
-}
-
 export default function CreateClubView() {
+  const { user } = useMain();
+  const { setClubs, setSelectedClub } = useClub();
+
   const [name, setName] = useState('');
   const [passcode, setPasscode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const clubVM = useStore() as AppStore;
-  const vm = useStore() as AppStore;
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<TierProduct | null>(null);
 
   const isInputValid = name.trim().length > 5 && passcode.trim().length > 5;
 
-  const handlePurchase = async (productId: string) => {
+  const handleTierSelection = (tier: TierProduct) => {
     if (!isInputValid) {
       Alert.alert('Invalid Input', 'Club name and passcode must be at least 6 characters long.');
       return;
     }
+    setSelectedTier(tier);
+    setShowPurchaseModal(true);
+  };
+
+  const handlePurchase = async () => {
+    if (!selectedTier) return;
 
     setLoading(true);
     try {
       const purchase = await InAppPurchases.requestPurchase({
-        sku: productId
+        sku: selectedTier.id
       });
       
       const purchaseResult = Array.isArray(purchase) ? purchase[0] : purchase;
       
       if (purchaseResult) {
-        const selectedTier = TIER_PRODUCTS.find(tier => tier.id === productId);
-        
-        if (selectedTier) {
-          const clubToCreate: ClubCreate = {
-            name,
-            id: null,
-            superAdmin: vm.player?.id,
-            admins: [vm.player?.id || ''],
-            birdieWeight: 65,
-            clubLimit: selectedTier.limit,
-            password: passcode,
-          };
+        const newClub = {
+          name,
+          id: null,
+          superAdmin: user?.id,
+          admins: [user?.id || ''],
+          birdieWeight: 65,
+          clubLimit: selectedTier.limit,
+          password: passcode,
+        };
 
-          await new Promise<boolean>((resolve) => {
-            clubVM.createClub(clubToCreate, (success) => {
-              vm.getPlayer(vm.player?.id || '', (success) => {
-                resolve(success);
-              });
-            });
-          });
+        // Make API call to create club
+        const response = await fetch('/api/clubs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newClub),
+        });
 
-          setSuccess(true);
-          setTimeout(() => {
-            router.back();
-          }, 2000);
+        if (!response.ok) {
+          throw new Error('Failed to create club');
         }
+
+        const createdClub:Club = await response.json();
+        
+        // Update context
+        setClubs((prevClubs) => [...prevClubs, createdClub]);
+        setSelectedClub(createdClub);
+
+        // Navigate to club detailed view
+        router.push({
+          pathname: '/views/ClubDetailedView',
+          params: { id: createdClub.id }
+        });
       }
     } catch (error) {
-      console.error('Purchase failed:', error);
-      Alert.alert('Error', 'Failed to complete purchase. Please try again.');
+      console.error('Purchase/Creation failed:', error);
+      Alert.alert('Error', 'Failed to complete purchase or create club. Please try again.');
     } finally {
       setLoading(false);
+      setShowPurchaseModal(false);
     }
   };
 
@@ -125,7 +121,7 @@ export default function CreateClubView() {
         !isInputValid && styles.disabledButton
       ]}
       disabled={!isInputValid || loading}
-      onPress={() => handlePurchase(item.id)}
+      onPress={() => handleTierSelection(item)}
     >
       <Text style={styles.tierName}>{item.name}</Text>
       <Text style={styles.tierDetails}>
@@ -182,21 +178,22 @@ export default function CreateClubView() {
         showsVerticalScrollIndicator={false}
       />
 
-      {loading && (
+      <PurchaseModal
+        visible={showPurchaseModal}
+        onClose={() => setShowPurchaseModal(false)}
+        onConfirm={handlePurchase}
+        loading={loading}
+        tierDetails={selectedTier || {
+          name: '',
+          limit: 0,
+          price: '',
+        }}
+      />
+
+      {loading && !showPurchaseModal && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#FFD700" />
           <Text style={styles.loadingText}>Processing Purchase...</Text>
-        </View>
-      )}
-
-      {success && (
-        <View style={styles.overlay}>
-          <View style={styles.successBox}>
-            <Text style={styles.successText}>Success!</Text>
-            <Text style={styles.successMessage}>
-              Your club has been created successfully.
-            </Text>
-          </View>
         </View>
       )}
     </SafeAreaView>
@@ -206,7 +203,7 @@ export default function CreateClubView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#006400', 
+    backgroundColor: '#006400',
   },
   contentContainer: {
     padding: 20,
@@ -276,7 +273,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
     borderWidth: 1,
-    borderColor: 'rgba(1, 121, 111, 0.1)', // Light green border
+    borderColor: 'rgba(1, 121, 111, 0.1)',
   },
   disabledButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
@@ -297,7 +294,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(1, 121, 111, 0.9)', // Semi-transparent green
+    backgroundColor: 'rgba(1, 121, 111, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -309,35 +306,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  successBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 30,
-    width: width * 0.85,
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  successText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#01796F',
-    marginBottom: 15,
-    letterSpacing: 0.5,
-  },
-  successMessage: {
-    fontSize: 18,
-    color: '#01796F',
-    textAlign: 'center',
-    lineHeight: 24,
-    fontWeight: '500',
-    opacity: 0.9,
-  },
 });
-

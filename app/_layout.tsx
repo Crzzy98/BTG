@@ -10,6 +10,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import CognitoAuth from '../view-models/CognitoAuth'; // Add this import
 import { Provider } from 'react-redux';
 import store from '../store/store';
+import { AppProvider } from './context';
 
 export {
   ErrorBoundary,
@@ -63,38 +64,40 @@ function RootLayoutNav() {
   return (
     <Provider store={store}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen 
-          name="index" 
-          options={{ 
-            headerShown: false,
-            contentStyle: { backgroundColor: '#3b873e' },
-          }} 
-        />
-        <Stack.Screen 
-          name="views/ClubListView" 
-          options={{ 
-            title: 'Club List',
-            contentStyle: { backgroundColor: '#f5f5f5' },
-          }} 
-        />
-        <Stack.Screen 
-          name="views/CreateClubView" 
-          options={{ 
-            title: 'Create Club',
-            contentStyle: { backgroundColor: '#ffffff' },
-          }} 
-        />
-        {/* <Stack.Screen 
-          name="ClubDetailedView" 
-          options={{ 
-            title: 'Club Details',
-            contentStyle: { backgroundColor: '#ffffff' },
-          }} 
-        /> */}
-      </Stack>
-    </ThemeProvider>
-      </Provider>
-    
+        <AppProvider>
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#3b873e' },
+              }}
+            />
+            <Stack.Screen
+              name="views/ClubListView"
+              options={{
+                title: 'Club List',
+                contentStyle: { backgroundColor: '#f5f5f5' },
+              }}
+            />
+            <Stack.Screen
+              name="views/CreateClubView"
+              options={{
+                title: 'Create Club',
+                contentStyle: { backgroundColor: '#ffffff' },
+              }}
+            />
+            <Stack.Screen
+              name="ClubDetailedView"
+              options={{
+                title: 'Club Details',
+                contentStyle: { backgroundColor: '#ffffff' },
+              }}
+            />
+          </Stack>
+        </AppProvider>
+      </ThemeProvider>
+    </Provider>
+
   );
 }

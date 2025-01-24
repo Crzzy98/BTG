@@ -7,7 +7,7 @@ interface User {
   email: string;
 }
 
-interface Club {
+export interface Club {
   id: string;
   name: string;
   description?: string;
@@ -27,7 +27,7 @@ interface ClubContextType {
   selectedClub: Club | null;
   setSelectedClub: (club: Club | null) => void;
   clubs: Club[];
-  setClubs: (clubs: Club[]) => void;
+  setClubs: React.Dispatch<React.SetStateAction<Club[]>>;
   refreshClubs: () => Promise<void>;
 }
 
