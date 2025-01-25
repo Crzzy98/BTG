@@ -1,4 +1,3 @@
-// CreateClubView.tsx
 'use client';
 
 import { router } from 'expo-router';
@@ -7,80 +6,80 @@ import {
   View,
   Text,
   TextInput,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Dimensions,
+  KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import * as InAppPurchases from 'react-native-iap';
-import { useMain, useClub, Club } from '../context/context';
-import PurchaseModal from '../view-components/PurchaseModal';
-
-const { width } = Dimensions.get('window');
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { setSelectedClub } from '@/store/reducers/clubReducer';
+import type { Club } from '@/store/types'; // Import the exact type
 
 interface TierProduct {
   id: string;
-  name: string;
-  limit: number;
+  title: string;
+  description: string;
   price: string;
+  limit: number;
 }
 
-const TIER_PRODUCTS: TierProduct[] = [
-  { id: '1star.club.create', name: 'Basic Club', limit: 10, price: '$4.99' },
-  { id: '2star.club.create', name: 'Standard Club', limit: 20, price: '$9.99' },
-  { id: '3star.club.create', name: 'Premium Club', limit: 30, price: '$14.99' },
-  { id: '4star.club.create', name: 'Pro Club', limit: 40, price: '$19.99' },
-  { id: '5star.club.create', name: 'Elite Club', limit: 50, price: '$24.99' },
-];
+const { width, height } = Dimensions.get('window');
 
 export default function CreateClubView() {
-  const { user } = useMain();
-  const { setClubs, setSelectedClub } = useClub();
-
   const [name, setName] = useState('');
   const [passcode, setPasscode] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState<TierProduct | null>(null);
+  
+  const dispatch = useDispatch<AppDispatch>();
 
-  const isInputValid = name.trim().length > 5 && passcode.trim().length > 5;
+  const DEFAULT_BIRDIE_WEIGHT = 65
 
-  const handleTierSelection = (tier: TierProduct) => {
-    if (!isInputValid) {
-      Alert.alert('Invalid Input', 'Club name and passcode must be at least 6 characters long.');
+  const tiers: TierProduct[] = [
+    { id: 'small_tier', title: 'Small Club', description: 'Up to 25 members', price: '$4.99', limit: 25 },
+    { id: 'medium_tier', title: 'Medium Club', description: 'Up to 50 members', price: '$9.99', limit: 50 },
+    { id: 'large_tier', title: 'Large Club', description: 'Up to 100 members', price: '$19.99', limit: 100 },
+  ];
+
+  //Store user on login and retrieve here
+  const handlePurchase = async () => {
+    if (!selectedTier || !user) {
+      Alert.alert('Error', 'Please select a tier and ensure you are logged in');
       return;
     }
-    setSelectedTier(tier);
-    setShowPurchaseModal(true);
-  };
 
-  const handlePurchase = async () => {
-    if (!selectedTier) return;
+    if (name.length < 6 || passcode.length < 6) {
+      Alert.alert('Validation Error', 'Club name and passcode must be at least 6 characters');
+      return;
+    }
 
     setLoading(true);
     try {
       const purchase = await InAppPurchases.requestPurchase({
         sku: selectedTier.id
       });
-      
+
       const purchaseResult = Array.isArray(purchase) ? purchase[0] : purchase;
-      
+
+      //REview swift file using AI to determine necessary club data structure
+      //  and do same for player and user/ refine store
       if (purchaseResult) {
-        const newClub = {
+        const newClub: Partial<Club> = {
           name,
-          id: null,
-          superAdmin: user?.id,
-          admins: [user?.id || ''],
-          birdieWeight: 65,
+          passcode,
+          superAdmin: user.id,
+          admins: [user.id],
+          birdieWeight: DEFAULT_BIRDIE_WEIGHT,
           clubLimit: selectedTier.limit,
-          password: passcode,
         };
 
-        // Make API call to create club
         const response = await fetch('/api/clubs', {
           method: 'POST',
           headers: {
@@ -89,113 +88,86 @@ export default function CreateClubView() {
           body: JSON.stringify(newClub),
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to create club');
+        const data: Club = await response.json();
+
+        if (response.ok) {
+          dispatch(setSelectedClub(data));
+          setShowPurchaseModal(false);
+          router.push('/views/ClubDetailedView');
+        } else {
+          Alert.alert('Error', 'Failed to create club');
         }
-
-        const createdClub:Club = await response.json();
-        
-        // Update context
-        setClubs((prevClubs) => [...prevClubs, createdClub]);
-        setSelectedClub(createdClub);
-
-        // Navigate to club detailed view
-        router.push({
-          pathname: '/views/ClubDetailedView',
-          params: { id: createdClub.id }
-        });
       }
     } catch (error) {
-      console.error('Purchase/Creation failed:', error);
-      Alert.alert('Error', 'Failed to complete purchase or create club. Please try again.');
+      console.error('Error creating club:', error);
+      Alert.alert('Error', 'Failed to create club. Please try again.');
     } finally {
       setLoading(false);
-      setShowPurchaseModal(false);
     }
   };
 
-  const renderTierItem = ({ item }: { item: TierProduct }) => (
+  const renderTierOption = (tier: TierProduct) => (
     <TouchableOpacity
+      key={tier.id}
       style={[
-        styles.tierButton,
-        !isInputValid && styles.disabledButton
+        styles.tierOption,
+        selectedTier?.id === tier.id && styles.selectedTier
       ]}
-      disabled={!isInputValid || loading}
-      onPress={() => handleTierSelection(item)}
+      onPress={() => setSelectedTier(tier)}
     >
-      <Text style={styles.tierName}>{item.name}</Text>
-      <Text style={styles.tierDetails}>
-        Up to {item.limit} members • {item.price}
-      </Text>
+      <Text style={styles.tierTitle}>{tier.title}</Text>
+      <Text style={styles.tierDescription}>{tier.description}</Text>
+      <Text style={styles.tierPrice}>{tier.price}</Text>
     </TouchableOpacity>
-  );
-
-  const FormSection = () => (
-    <View style={styles.formContainer}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Club Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter club name (min. 6 characters)"
-          placeholderTextColor="#666"
-          value={name}
-          onChangeText={setName}
-          maxLength={30}
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Club Passcode</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter passcode (min. 6 characters)"
-          placeholderTextColor="#666"
-          value={passcode}
-          onChangeText={setPasscode}
-          secureTextEntry
-          maxLength={20}
-          autoCapitalize="none"
-        />
-      </View>
-    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList<TierProduct>
-        data={TIER_PRODUCTS}
-        renderItem={renderTierItem}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.title}>Create New Club</Text>
-            <FormSection />
-            <Text style={styles.sectionTitle}>Select Club Tier</Text>
-          </>
-        }
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>Create New Club</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Club Name (min. 6 characters)"
+            value={name}
+            onChangeText={setName}
+            placeholderTextColor="#666"
+            autoCapitalize="none"
+          />
 
-      <PurchaseModal
-        visible={showPurchaseModal}
-        onClose={() => setShowPurchaseModal(false)}
-        onConfirm={handlePurchase}
-        loading={loading}
-        tierDetails={selectedTier || {
-          name: '',
-          limit: 0,
-          price: '',
-        }}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Passcode (min. 6 characters)"
+            value={passcode}
+            onChangeText={setPasscode}
+            placeholderTextColor="#666"
+            secureTextEntry
+            autoCapitalize="none"
+          />
 
-      {loading && !showPurchaseModal && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#FFD700" />
-          <Text style={styles.loadingText}>Processing Purchase...</Text>
+          <Text style={styles.sectionTitle}>Select Club Size</Text>
+          
+          <View style={styles.tiersContainer}>
+            {tiers.map(renderTierOption)}
+          </View>
+
+          <TouchableOpacity 
+            style={styles.createButton}
+            onPress={handlePurchase}
+            disabled={loading || !selectedTier}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.createButtonText}>Create Club</Text>
+            )}
+          </TouchableOpacity>
         </View>
-      )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -203,107 +175,77 @@ export default function CreateClubView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#006400',
+    backgroundColor: '#f5f5f5',
   },
-  contentContainer: {
+  content: {
     padding: 20,
+    flex: 1,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
     textAlign: 'center',
-    marginBottom: 40,
-    marginTop: 20,
-    letterSpacing: 1,
-  },
-  formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
-    padding: 25,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  inputContainer: {
-    marginBottom: 25,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: Platform.OS === 'ios' ? 16 : 14,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
     fontSize: 16,
-    color: '#01796F',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    fontWeight: '500',
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 20,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  tierButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 15,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(1, 121, 111, 0.1)',
-  },
-  disabledButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    opacity: 0.8,
-  },
-  tierName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#01796F',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  tierDetails: {
-    fontSize: 16,
-    color: '#01796F',
-    opacity: 0.8,
-    fontWeight: '500',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(1, 121, 111, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    marginTop: 15,
     fontSize: 18,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    marginTop: 20,
+    marginBottom: 15,
+    color: '#333',
+  },
+  tiersContainer: {
+    marginBottom: 20,
+  },
+  tierOption: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  selectedTier: {
+    borderColor: '#007AFF',
+    backgroundColor: '#F0F8FF',
+  },
+  tierTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  tierDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+  },
+  tierPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginTop: 5,
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
