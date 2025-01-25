@@ -11,7 +11,7 @@ import {
     StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useMain, useClub } from "../context";
+import { useMain, useClub } from "../context/context";
 
 // Define interfaces
 interface ClubDetailedViewProps {

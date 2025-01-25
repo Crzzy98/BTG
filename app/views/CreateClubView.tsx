@@ -17,7 +17,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import * as InAppPurchases from 'react-native-iap';
-import { useMain, useClub, Club } from '../context';
+import { useMain, useClub, Club } from '../context/context';
 import PurchaseModal from '../view-components/PurchaseModal';
 
 const { width } = Dimensions.get('window');
