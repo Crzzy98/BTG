@@ -10,7 +10,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import CognitoAuth from '../view-models/CognitoAuth'; // Add this import
 import { Provider } from 'react-redux';
 import store from '../store/store';
-import { AppProvider } from './context';
+import { AppProvider } from './context/context';
 
 export {
   ErrorBoundary,
