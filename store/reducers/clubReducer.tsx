@@ -20,35 +20,72 @@ const clubSlice = createSlice({
   name: 'clubs',
   initialState,
   reducers: {
-    setClubs: (state:any, action: PayloadAction<Club[]>) => {
+    setClubs: (state, action: PayloadAction<Club[]>) => {
       state.clubs = action.payload;
     },
-    addClub: (state:any, action: PayloadAction<Club>) => {
-      state.clubs.push(action.payload);
+    addClub: (state, action: PayloadAction<Club>) => {
+      state.clubs.push({
+        ...action.payload,
+        players: action.payload.players || [],
+        admins: action.payload.admins || [],
+        birdieWeight: action.payload.birdieWeight || 65,
+        clubLimit: action.payload.clubLimit || 25,
+      });
     },
-    updateClub: (state:any, action: PayloadAction<Club>) => {
-      const index = state.clubs.findIndex((club:any) => club.id === action.payload.id);
+    updateClub: (state, action: PayloadAction<Club>) => {
+      const index = state.clubs.findIndex(club => club.id === action.payload.id);
       if (index !== -1) {
-        state.clubs[index] = action.payload;
+        state.clubs[index] = {
+          ...state.clubs[index],
+          ...action.payload,
+        };
       }
     },
-    deleteClub: (state:any, action: PayloadAction<string>) => {
-      state.clubs = state.clubs.filter((club:any) => club.id !== action.payload);
+    deleteClub: (state, action: PayloadAction<string>) => {
+      state.clubs = state.clubs.filter(club => club.id !== action.payload);
     },
-    setSelectedClub: (state:any, action: PayloadAction<Club | null>) => {
+    setSelectedClub: (state, action: PayloadAction<Club | null>) => {
       state.selectedClub = action.payload;
     },
-    addPlayerToClub: (state:any, action: PayloadAction<{ clubId: string; player: Player }>) => {
-      const club = state.clubs.find((club:any) => club.id === action.payload.clubId);
+    addPlayerToClub: (state, action: PayloadAction<{ clubId: string; player: Player }>) => {
+      const club = state.clubs.find(club => club.id === action.payload.clubId);
       if (club) {
         if (!club.players) club.players = [];
         club.players.push(action.payload.player);
       }
     },
-    setLoading: (state:any, action: PayloadAction<boolean>) => {
+    addAdminToClub: (state, action: PayloadAction<{ clubId: string; adminId: string }>) => {
+      const club = state.clubs.find(club => club.id === action.payload.clubId);
+      if (club) {
+        if (!club.admins) club.admins = [];
+        if (!club.admins.includes(action.payload.adminId)) {
+          club.admins.push(action.payload.adminId);
+        }
+      }
+    },
+    updateClubSettings: (state, action: PayloadAction<{ 
+      clubId: string; 
+      birdieWeight?: number;
+      clubLimit?: number;
+      passcode?: string;
+    }>) => {
+      const club = state.clubs.find(club => club.id === action.payload.clubId);
+      if (club) {
+        if (action.payload.birdieWeight !== undefined) {
+          club.birdieWeight = action.payload.birdieWeight;
+        }
+        if (action.payload.clubLimit !== undefined) {
+          club.clubLimit = action.payload.clubLimit;
+        }
+        if (action.payload.passcode !== undefined) {
+          club.passcode = action.payload.passcode;
+        }
+      }
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setError: (state:any, action: PayloadAction<string | null>) => {
+    setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
   },
@@ -61,7 +98,10 @@ export const {
   deleteClub,
   setSelectedClub,
   addPlayerToClub,
+  addAdminToClub,
+  updateClubSettings,
   setLoading,
   setError,
 } = clubSlice.actions;
+
 export default clubSlice.reducer;

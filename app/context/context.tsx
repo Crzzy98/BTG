@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// context.tsx
+import React, { createContext,useState, useContext, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser, setLoading, logout } from '../../store/reducers/authReducer';
+import { RootState } from '../../store/types'; // Add this import
 
-// Context Types
+// Keep your existing interfaces
 interface User {
   id: string;
   name: string;
@@ -18,9 +22,9 @@ interface MainContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   isAuthenticated: boolean;
-  setIsAuthenticated: (value: boolean) => void;
   loading: boolean;
   setLoading: (value: boolean) => void;
+  logout: () => void;
 }
 
 interface ClubContextType {
@@ -31,61 +35,47 @@ interface ClubContextType {
   refreshClubs: () => Promise<void>;
 }
 
-// Context Definitions
-const MainContext = createContext<MainContextType>({
-  user: null,
-  setUser: () => {},
-  isAuthenticated: false,
-  setIsAuthenticated: () => {},
-  loading: true,
-  setLoading: () => {},
-});
+// Create contexts
+const MainContext = createContext<MainContextType | undefined>(undefined);
+const ClubContext = createContext<ClubContextType | undefined>(undefined);
 
-const ClubContext = createContext<ClubContextType>({
-  selectedClub: null,
-  setSelectedClub: () => {},
-  clubs: [],
-  setClubs: () => {},
-  refreshClubs: async () => {},
-});
-
-// Provider components
+// Main Provider with Redux
 export const MainProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const loading = useSelector((state: RootState) => state.auth.loading);
 
-  //  Initialization logic 
   useEffect(() => {
-    // Example: Check authentication status, fetch user data, etc.
     const initializeApp = async () => {
       try {
+        dispatch(setLoading(true));
         // Add your initialization logic here
         // Example: const userData = await checkAuthStatus();
-        // setUser(userData);
-        // setIsAuthenticated(true);
+        // dispatch(setUser(userData));
       } catch (error) {
         console.error('Initialization error:', error);
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     };
 
     initializeApp();
-  }, []);
+  }, [dispatch]);
 
   const value = {
     user,
-    setUser,
+    setUser: (user: User | null) => dispatch(setUser(user)),
     isAuthenticated,
-    setIsAuthenticated,
     loading,
-    setLoading,
+    setLoading: (value: boolean) => dispatch(setLoading(value)),
+    logout: () => dispatch(logout()),
   };
 
   return <MainContext.Provider value={value}>{children}</MainContext.Provider>;
 };
 
+// Club Provider remains the same
 export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -93,7 +83,6 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshClubs = async () => {
     try {
       // Add your fetch logic here
-      // Example:
       // const response = await fetch('your-api-endpoint');
       // const data = await response.json();
       // setClubs(data);
@@ -117,7 +106,7 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <ClubContext.Provider value={value}>{children}</ClubContext.Provider>;
 };
 
-// Custom hooks for using the contexts
+// Custom hooks
 export const useMain = () => {
   const context = useContext(MainContext);
   if (context === undefined) {
@@ -134,7 +123,7 @@ export const useClub = () => {
   return context;
 };
 
-// Combined provider for easier usage
+// Combined provider
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <MainProvider>
@@ -143,5 +132,4 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-// Export contexts if needed directly
 export { MainContext, ClubContext };

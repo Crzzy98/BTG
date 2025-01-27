@@ -1,15 +1,21 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { User } from '../types';
 
 interface UserState {
-  isPro: boolean;
-  userName: string | null;
+  user: User | null;
+  isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
 }
 
+interface UpdateHandicapPayload {
+  userId: string;
+  handicap: number;
+}
+
 const initialState: UserState = {
-  isPro: false,
-  userName: null,
+  user: null,
+  isAuthenticated: false,
   loading: false,
   error: null,
 };
@@ -18,30 +24,31 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUserName: (state, action: PayloadAction<string>) => {
-      state.userName = action.payload;
-      state.error = null;
+    setUser: (state, action: PayloadAction<User | null>) => {
+      state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
     },
-    setProStatus: (state, action: PayloadAction<boolean>) => {
-      state.isPro = action.payload;
+    updateHandicap: (state, action: PayloadAction<number>) => {
+      if (state.user) {
+        state.user.handicap = action.payload;
+      }
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setError: (state, action: PayloadAction<string>) => {
+    setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
     logout: (state) => {
-      state.isPro = false;
-      state.userName = null;
-      state.error = null;
+      state.user = null;
+      state.isAuthenticated = false;
     },
   },
 });
 
 export const { 
-  setUserName, 
-  setProStatus, 
+  setUser, 
+  updateHandicap, 
   setLoading, 
   setError, 
   logout 

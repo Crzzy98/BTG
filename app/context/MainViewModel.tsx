@@ -1,7 +1,7 @@
 import { useMain } from './context'; // Assuming the path to the context file
 
 export const MainViewModel = () => {
-  const { user, setUser, isAuthenticated, setIsAuthenticated, loading, setLoading } = useMain();
+  const { user, setUser, isAuthenticated, loading, setLoading } = useMain();
 
   const loginUser = async (email: string, password: string) => {
     try {
@@ -16,10 +16,8 @@ export const MainViewModel = () => {
 
       const userData = await response.json();
       setUser(userData);
-      setIsAuthenticated(true);
     } catch (error) {
       console.error('Login error:', error);
-      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -27,7 +25,6 @@ export const MainViewModel = () => {
 
   const logoutUser = () => {
     setUser(null);
-    setIsAuthenticated(false);
   };
 
   const getPlayer = async (userId: string, callback: () => void) => {
