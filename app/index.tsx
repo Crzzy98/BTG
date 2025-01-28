@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Login from './views/Login';
 import CognitoAuth from '@/view-models/CognitoAuth'
-
+import SettingsView from './views/SettingsView';
 
 //Dev View 
 import ClubListView from './views/Club/ClubListView';
@@ -16,7 +16,8 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {/* <Login cognitoAuth={CognitoAuth} /> */}
-      <ClubListView></ClubListView>
+      {/* <ClubListView></ClubListView> */}
+      <SettingsView></SettingsView>
     </View>
   );
 }

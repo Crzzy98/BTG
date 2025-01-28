@@ -54,11 +54,11 @@ export default function ClubListView({ player, subscriptionTier }: ClubListViewP
       if (clubs.length >= clubLimit) {
         setShowPaywall(true);
       } else {
-        router.push('/views/CreateClubView');
+        router.push('/views/Club/CreateClubView');
       }
     } else {
       router.push({
-        pathname: '/views/CreateClubView',
+        pathname: '/views/Club/CreateClubView',
         params: { clubId: club.id }
       });
     }
@@ -70,7 +70,7 @@ export default function ClubListView({ player, subscriptionTier }: ClubListViewP
       onPress={() => handleClubPress({ id: 'create', name: 'Create Club', isInvited: false })}
     >
       <ImageBackground
-        source={require('../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
+        source={require('../../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
         style={styles.cardBackground}
         imageStyle={styles.cardBackgroundImage}
       >
@@ -87,7 +87,7 @@ export default function ClubListView({ player, subscriptionTier }: ClubListViewP
       onPress={() => handleClubPress(item)}
     >
       <ImageBackground
-        source={require('../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
+        source={require('../../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
         style={styles.cardBackground}
         imageStyle={styles.cardBackgroundImage}
       >
@@ -114,7 +114,7 @@ export default function ClubListView({ player, subscriptionTier }: ClubListViewP
       onPress={() => handleClubPress(item)}
     >
       <ImageBackground
-        source={require('../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
+        source={require('../../../assets/images/GolfCourses/image0.imageset/the-16th-hole-at-recently-named-ireland-s-best-golf-course-the-golf-course-at-adare-manor-1654791803.jpg')}
         style={styles.cardBackground}
         imageStyle={styles.cardBackgroundImage}
       >

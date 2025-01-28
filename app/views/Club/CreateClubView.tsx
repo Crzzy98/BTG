@@ -107,7 +107,7 @@ export default function CreateClubView() {
                   [
                     {
                       text: 'OK',
-                      onPress: () => router.push('/views/ClubDetailedView')
+                      onPress: () => router.push('/views/Club/ClubDetailedView')
                     }
                   ]
                 );
