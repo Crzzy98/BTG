@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,15 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { setUser, setLoading } from '@/store/reducers/userReducer';
+import type { User } from '@/store/types';
 
 const { width } = Dimensions.get('window');
 
 interface LoginProps {
-  cognitoAuth: any; // Replace with proper type from your auth service
+  cognitoAuth: any; // Replace with proper Cognito type
 }
 
 export default function Login({ cognitoAuth }: LoginProps) {
@@ -25,10 +29,11 @@ export default function Login({ cognitoAuth }: LoginProps) {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [handicap, setHandicap] = useState(0);
+  const [handicap, setHandicap] = useState('0');
   const [isSignUp, setIsSignUp] = useState(false);
   
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const dispatch = useDispatch<AppDispatch>();
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
 
   const fadeIn = () => {
     Animated.timing(fadeAnim, {
@@ -56,47 +61,83 @@ export default function Login({ cognitoAuth }: LoginProps) {
   };
 
   const handleFormSubmit = async () => {
-    if (isSignUp) {
-      try {
-        await cognitoAuth.signUp(
+    dispatch(setLoading(true));
+
+    try {
+      if (isSignUp) {
+        // Handle Sign Up
+        const signUpResult = await cognitoAuth.signUp(
           email,
           password,
-          email,
+          email, // username same as email
           firstName,
           lastName,
-          handicap.toString()
+          handicap
         );
-        showAlert(
-          'Sign up successful! Please check your email for verification.',
-          'success'
-        );
-        fadeOut();
-        setTimeout(() => {
-          setIsSignUp(false);
-          setPassword('');
-          setFirstName('');
-          setLastName('');
-          setHandicap(0);
-          fadeIn();
-        }, 200);
-      } catch (err: any) {
-        showAlert(err.message, 'error');
-      }
-    } else {
-      if (!email || !password) {
-        showAlert('Please enter both email and password', 'error');
-        return;
-      }
-      try {
+
+        if (signUpResult.success) {
+          showAlert(
+            'Sign up successful! Please check your email for verification.',
+            'success'
+          );
+          fadeOut();
+          setTimeout(() => {
+            setIsSignUp(false);
+            setPassword('');
+            setFirstName('');
+            setLastName('');
+            setHandicap('0');
+            fadeIn();
+          }, 200);
+        } else {
+          throw new Error(signUpResult.message);
+        }
+      } else {
+        // Handle Sign In
+        if (!email || !password) {
+          throw new Error('Please enter both email and password');
+        }
+
+        // Sign out any existing session
         await cognitoAuth.signOutLocally();
-        await cognitoAuth.signIn(email, password);
-        showAlert('Login successful!', 'success');
-        setTimeout(() => {
-          router.replace('./ClubListView');
-        }, 1000);
-      } catch (err: any) {
-        showAlert(err.message, 'error');
+
+        // Attempt sign in
+        const signInResult = await cognitoAuth.signIn(email, password);
+
+        //If Seuccessful update store data and navigate to ClubListView
+        if (signInResult.success) {
+          // Get user attributes from Cognito
+          const userAttributes = await cognitoAuth.getCurrentUser();
+
+          // Create user object from Cognito attributes
+          const userData: User = {
+            id: userAttributes.sub,
+            email: userAttributes.email,
+            name: `${userAttributes.given_name} ${userAttributes.family_name}`,
+            isPro: false, // Set default value or get from attributes
+            clubs: [], // Initialize empty clubs array
+            handicap: parseFloat(userAttributes.custom['custom:handicap'] || '0'),
+            firstName: userAttributes.given_name,
+            lastName: userAttributes.family_name,
+          };
+
+          // Update Redux store with user data
+          dispatch(setUser(userData));
+
+          showAlert('Login successful!', 'success');
+          
+          // Navigate after successful login
+          setTimeout(() => {
+            router.replace('./ClubListView');
+          }, 1000);
+        } else {
+          throw new Error(signInResult.message);
+        }
       }
+    } catch (err: any) {
+      showAlert(err.message, 'error');
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -150,8 +191,8 @@ export default function Login({ cognitoAuth }: LoginProps) {
               <TextInput
                 style={styles.input}
                 placeholder="Handicap"
-                value={handicap.toString()}
-                onChangeText={(text) => setHandicap(Number(text))}
+                value={handicap}
+                onChangeText={setHandicap}
                 keyboardType="numeric"
               />
             </>

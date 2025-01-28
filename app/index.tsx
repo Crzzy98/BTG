@@ -1,10 +1,8 @@
 import { StyleSheet, View } from 'react-native';
-import Login from './views/Login';
-import CognitoAuth from '@/view-models/CognitoAuth'
-
+import MainNavigationView from './views/MainNavigationView';
 
 //Dev View 
-import ClubListView from './views/ClubListView';
+import ClubListView from './views/Club/ClubListView';
 
 //AWS config imports 
 import { Amplify } from "aws-amplify";
@@ -15,8 +13,7 @@ Amplify.configure(outputs);
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      {/* <Login cognitoAuth={CognitoAuth} /> */}
-      <ClubListView></ClubListView>
+      <MainNavigationView/>
     </View>
   );
 }
