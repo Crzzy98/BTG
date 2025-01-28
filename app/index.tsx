@@ -4,7 +4,7 @@ import CognitoAuth from '@/view-models/CognitoAuth'
 
 
 //Dev View 
-import ClubListView from './views/ClubListView';
+import ClubListView from './views/Club/ClubListView';
 
 //AWS config imports 
 import { Amplify } from "aws-amplify";

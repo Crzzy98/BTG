@@ -1,10 +1,8 @@
-// context.tsx
 import React, { createContext,useState, useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser, setLoading, logout } from '../../store/reducers/authReducer';
-import { RootState } from '../../store/types'; // Add this import
+import { RootState } from '../../store/types';
 
-// Keep your existing interfaces
 interface User {
   id: string;
   name: string;
@@ -35,7 +33,6 @@ interface ClubContextType {
   refreshClubs: () => Promise<void>;
 }
 
-// Create contexts
 const MainContext = createContext<MainContextType | undefined>(undefined);
 const ClubContext = createContext<ClubContextType | undefined>(undefined);
 

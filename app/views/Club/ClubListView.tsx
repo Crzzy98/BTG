@@ -12,7 +12,7 @@ import {
   RefreshControl
 } from 'react-native';
 import { router } from 'expo-router';
-import PaywallView from '../view-components/PayWallView';
+import PaywallView from '../../view-components/PayWallView';
 
 const { width } = Dimensions.get('window');
 

@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { MainViewModel as useMainViewModel } from '../context/MainViewModel'; // Assuming context is used
-import { ClubViewModel as useClubViewModel } from '../context/ClubViewModel'; // Assuming context is used
+import { MainViewModel as useMainViewModel } from '../../context/MainViewModel'; // Assuming context is used
+import { ClubViewModel as useClubViewModel } from '../../context/ClubViewModel'; // Assuming context is used
 
 interface Club {
   id: string;
