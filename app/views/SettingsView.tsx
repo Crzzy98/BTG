@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Alert, TouchableOpacity, Linking, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Player } from '../../store/types';
 
-const SettingsView = () => {
+interface SettingsViewProps {
+  player: Player;
+  showEditPlayer: boolean;
+  onEditDetails: () => void;
+}
+
+export default function SettingsView({ 
+  player, 
+  showEditPlayer, 
+  onEditDetails 
+}: SettingsViewProps) {
   const router = useRouter();
-// Mock player data
-const player = {
-    id: '12345',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-  };
-  const [appName, setAppName] = useState('');
-  const [showEditPlayer, setShowEditPlayer] = useState(false);
+  const [appName, setAppName] = useState('Big Team Golf');
 
   const handleLogout = async () => {
     // Clear user data (adjust as needed)
@@ -36,8 +40,6 @@ const player = {
           onPress: async () => {
             console.log('Deleted account for:', player?.id);
             // Add your delete logic here
-
-
             console.log("Account deletion successful!")
             // router.push('/signup');
           },
@@ -47,15 +49,9 @@ const player = {
   };
 
   const handleEditPlayer = () => {
-    setShowEditPlayer(true);
+    onEditDetails();
     console.log('Edit Player screen');
-    // router.push('/edit-player'); // Navigate to Edit Player screen
   };
-
-  useEffect(() => {
-    // Get app name from the app configuration
-    setAppName('Big Team Golf'); // Replace with dynamic logic if needed
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,7 +62,10 @@ const player = {
           <Text style={styles.buttonText}>Edit Player</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => console.log("Change password screen/modal")} style={styles.button}>
+        <TouchableOpacity 
+          onPress={() => console.log("Change password screen/modal")} 
+          style={styles.button}
+        >
           <Text style={styles.buttonText}>Change Password</Text>
         </TouchableOpacity>
 
@@ -109,9 +108,7 @@ const player = {
       </View>
     </SafeAreaView>
   );
-};
-
-export default SettingsView;
+}
 
 const styles = StyleSheet.create({
   container: {

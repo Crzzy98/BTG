@@ -1,9 +1,16 @@
 import  store  from './store';
 
 export interface Player {
-    id: string;
-    name: string;
-    // Add other player properties as needed
+  id: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  handicap?: number;
+  profileImage?: string;
+  clubIds?: string[];
+  isActive?: boolean;
+  getWeight: (club: Club) => number; // Add this method
   }
   
   export interface Club {
