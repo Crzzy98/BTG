@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Animated,
-  Dimensions,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,11 +16,10 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { setUser, setLoading } from '@/store/reducers/userReducer';
 import type { User } from '@/store/types';
-
-const { width } = Dimensions.get('window');
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface LoginProps {
-  cognitoAuth: any; // Replace with proper Cognito type
+  cognitoAuth: any;
 }
 
 export default function Login({ cognitoAuth }: LoginProps) {
@@ -31,25 +29,9 @@ export default function Login({ cognitoAuth }: LoginProps) {
   const [lastName, setLastName] = useState('');
   const [handicap, setHandicap] = useState('0');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const dispatch = useDispatch<AppDispatch>();
-  const fadeAnim = React.useRef(new Animated.Value(1)).current;
-
-  const fadeIn = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const fadeOut = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
 
   const showAlert = (message: string, type: 'success' | 'error') => {
     Alert.alert(
@@ -65,11 +47,10 @@ export default function Login({ cognitoAuth }: LoginProps) {
 
     try {
       if (isSignUp) {
-        // Handle Sign Up
         const signUpResult = await cognitoAuth.signUp(
           email,
           password,
-          email, // username same as email
+          email,
           firstName,
           lastName,
           handicap
@@ -80,53 +61,39 @@ export default function Login({ cognitoAuth }: LoginProps) {
             'Sign up successful! Please check your email for verification.',
             'success'
           );
-          fadeOut();
-          setTimeout(() => {
-            setIsSignUp(false);
-            setPassword('');
-            setFirstName('');
-            setLastName('');
-            setHandicap('0');
-            fadeIn();
-          }, 200);
+          setIsSignUp(false);
+          setPassword('');
+          setFirstName('');
+          setLastName('');
+          setHandicap('0');
         } else {
           throw new Error(signUpResult.message);
         }
       } else {
-        // Handle Sign In
         if (!email || !password) {
           throw new Error('Please enter both email and password');
         }
 
-        // Sign out any existing session
         await cognitoAuth.signOutLocally();
-
-        // Attempt sign in
         const signInResult = await cognitoAuth.signIn(email, password);
 
-        //If Seuccessful update store data and navigate to ClubListView
         if (signInResult.success) {
-          // Get user attributes from Cognito
           const userAttributes = await cognitoAuth.getCurrentUser();
 
-          // Create user object from Cognito attributes
           const userData: User = {
             id: userAttributes.sub,
             email: userAttributes.email,
             name: `${userAttributes.given_name} ${userAttributes.family_name}`,
-            isPro: false, // Set default value or get from attributes
-            clubs: [], // Initialize empty clubs array
+            isPro: false,
+            clubs: [],
             handicap: parseFloat(userAttributes.custom['custom:handicap'] || '0'),
             firstName: userAttributes.given_name,
             lastName: userAttributes.family_name,
           };
 
-          // Update Redux store with user data
           dispatch(setUser(userData));
-
           showAlert('Login successful!', 'success');
           
-          // Navigate to Main Navigation after successful login
           setTimeout(() => {
             router.replace('./MainNavigationView');
           }, 1000);
@@ -144,15 +111,22 @@ export default function Login({ cognitoAuth }: LoginProps) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: '#3b873e' }}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View style={[styles.formContainer, { opacity: fadeAnim }]}>
-          <Text style={styles.title}>
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/images/logo/bigteamgolflogo_1.png')}
+            style={styles.logo}
+          />
+        </View>
+
+        <View style={styles.formContainer}>
+          <Text style={styles.header}>
+            {isSignUp ? 'Create Account' : 'Login'}
           </Text>
 
           <TextInput
@@ -164,16 +138,36 @@ export default function Login({ cognitoAuth }: LoginProps) {
             autoCapitalize="none"
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.passwordInput, styles.input]}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity 
+              style={styles.icon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Icon 
+                name={showPassword ? 'eye-off' : 'eye'} 
+                size={24} 
+                color="#666"
+              />
+            </TouchableOpacity>
+          </View>
 
           {isSignUp && (
             <>
+              <Text style={styles.passwordRequirements}>
+                Password must be at least 6 characters long and contain:
+                {'\n'}- At least one uppercase letter
+                {'\n'}- At least one lowercase letter
+                {'\n'}- At least one number
+                {'\n'}- At least one special character
+              </Text>
+
               <TextInput
                 style={styles.input}
                 placeholder="First Name"
@@ -198,31 +192,37 @@ export default function Login({ cognitoAuth }: LoginProps) {
             </>
           )}
 
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleFormSubmit}
-          >
-            <Text style={styles.submitButtonText}>
-              {isSignUp ? 'Sign Up' : 'Login'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.formButtons}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#fff' }]}
+              onPress={handleFormSubmit}
+            >
+              <Text style={[styles.buttonText, { color: '#3b873e' }]}>
+                {isSignUp ? 'Sign Up' : 'Login'}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => {
-              fadeOut();
-              setTimeout(() => {
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
                 setIsSignUp(!isSignUp);
                 setPassword('');
-                fadeIn();
-              }, 200);
-            }}
-          >
-            <Text style={styles.switchButtonText}>
-              {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
+                setFirstName('');
+                setLastName('');
+                setHandicap('0');
+              }}
+            >
+              <Text style={styles.signUpText}>
+                {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -230,59 +230,107 @@ export default function Login({ cognitoAuth }: LoginProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#3b873e',
-  },
-  scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  logo: {
+    width: 200,
+    height: 100,
+    resizeMode: 'contain',
+  },
   formContainer: {
-    backgroundColor: 'white',
+    flex: 1,
+    flexGrow: 1,
+    backgroundColor: '#3b873e',
     borderRadius: 10,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  title: {
-    fontSize: 24,
+  header: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#ffffff',
     marginBottom: 20,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 5,
-    padding: 15,
+    padding: 10,
     marginBottom: 15,
-    fontSize: 16,
+    backgroundColor: '#ffffff',
+    width: '100%',
   },
-  submitButton: {
-    backgroundColor: '#3b873e',
-    borderRadius: 5,
-    padding: 15,
+  passwordContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    position: 'relative',
+    width: '100%',
+    marginBottom: 15,
   },
-  submitButtonText: {
-    color: 'white',
-    fontSize: 16,
+  icon: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -45 }], 
+    zIndex: 1,
+  },
+  passwordInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    paddingRight: 45, // Make room for the icon
+    backgroundColor: '#ffffff',
+  },
+  passwordRequirements: {
+    fontSize: 12,
+    color: '#ffffff',
+    marginBottom: 15,
+  },
+  formButtons: {
+    marginTop: 0,
+    width: '100%',
+  },
+  button: {
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  signUpText: {
+    justifyContent: 'center',
+    alignItems:'center',
+    color: '#ffffff',
+    textAlign: 'center'
+  },
+  buttonText: {
     fontWeight: 'bold',
   },
-  switchButton: {
-    marginTop: 20,
+  dividerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginVertical: 15,  // Spacing above and below the divider
   },
-  switchButtonText: {
-    color: '#3b873e',
-    fontSize: 14,
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ffffff',  // Match your design color
+  },
+  dividerText: {
+    color: '#ffffff',  // Match your design color
+    paddingHorizontal: 10,  // Space between lines and text
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
