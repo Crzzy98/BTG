@@ -38,7 +38,7 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  // Add the auto-logout effect
+  // Auto-logout effect
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active' && CognitoAuth.loggedIn) {
@@ -71,6 +71,13 @@ function RootLayoutNav() {
               options={{
                 headerShown: false,
                 contentStyle: { backgroundColor: '#3b873e' },
+              }}
+            />
+            <Stack.Screen
+              name="MainNavigationView"
+              options={{
+                headerShown: false, 
+                contentStyle: { backgroundColor: '#ffffff' },
               }}
             />
             <Stack.Screen

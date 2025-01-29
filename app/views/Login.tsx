@@ -126,9 +126,9 @@ export default function Login({ cognitoAuth }: LoginProps) {
 
           showAlert('Login successful!', 'success');
           
-          // Navigate after successful login
+          // Navigate to Main Navigation after successful login
           setTimeout(() => {
-            router.replace('./ClubListView');
+            router.replace('./MainNavigationView');
           }, 1000);
         } else {
           throw new Error(signInResult.message);

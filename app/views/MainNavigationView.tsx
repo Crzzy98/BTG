@@ -10,7 +10,6 @@ import { Player, Club } from '../../store/types'
 const Tab = createBottomTabNavigator();
 
 const MainNavigationView = () => {
-    const [paywallShown, setPaywallShown] = useState(false);
     const [isPro, setIsPro] = useState(false);
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [error, setError] = useState(null);
@@ -61,99 +60,76 @@ const MainNavigationView = () => {
         fetchPlayer();
     }, []);
 
-    const handleSubscriptionCheck = () => {
-        // Simulate subscription check
-        const hasActiveSubscription = false; // Replace with real logic
-        setIsPro(hasActiveSubscription);
-        setPaywallShown(!hasActiveSubscription);
-    };
-
-    useEffect(() => {
-        handleSubscriptionCheck();
-    }, []);
-
     return (
-        <NavigationContainer>
-            <View style={styles.container}>
-                {updateAvailable && (
-                    <View style={styles.updateOverlay}>
-                        <Text style={styles.updateText}>An update is available!</Text>
-                    </View>
-                )}
+        <View style={styles.container}>
+            {updateAvailable && (
+                <View style={styles.updateOverlay}>
+                    <Text style={styles.updateText}>An update is available!</Text>
+                </View>
+            )}
 
-                {error && (
-                    <View style={styles.errorContainer}>
-                        <Text style={styles.errorTitle}>Uh Oh</Text>
-                        <Text style={styles.errorText}>{error}</Text>
-                        <TouchableOpacity onPress={() => setError(null)} style={styles.dismissErrorButton}>
-                            <Text style={styles.buttonText}>Dismiss</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+            {error && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorTitle}>Uh Oh</Text>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity onPress={() => setError(null)} style={styles.dismissErrorButton}>
+                        <Text style={styles.buttonText}>Dismiss</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
-                <Tab.Navigator
-                    initialRouteName="Clubs"
-                    screenOptions={{
-                        tabBarActiveTintColor: '#FFF',
-                        tabBarInactiveTintColor: '#DDD',
-                        tabBarStyle: { backgroundColor: '#1F8E3A' },
+            <Tab.Navigator
+                initialRouteName="Clubs"
+                screenOptions={{
+                    tabBarActiveTintColor: '#FFF',
+                    tabBarInactiveTintColor: '#DDD',
+                    tabBarStyle: { backgroundColor: '#1F8E3A' },
+                }}
+            >
+                <Tab.Screen
+                    name="Clubs"
+                    options={{
+                        tabBarIcon: ({ color }) => <Icon name="people" size={24} color={color} />,
                     }}
                 >
-                    <Tab.Screen
-                        name="Clubs"
-                        options={{
-                            tabBarIcon: ({ color }) => <Icon name="people" size={24} color={color} />,
-                        }}
-                    >
-                        {() => <ClubListView />}
-                    </Tab.Screen>
+                    {() => <ClubListView />}
+                </Tab.Screen>
 
-                    {player && club && (
-                        <>
-                            <Tab.Screen
-                                name="My Data"
-                                options={{
-                                    tabBarIcon: ({ color }) => <Icon name="person-circle" size={24} color={color} />,
-                                }}
-                            >
-                                {() => (
-                                    <DetailedPlayerView
-                                        player={player}
-                                        club={club }
-                                    />
-                                )}
-                            </Tab.Screen>
+                {player && club && (
+                    <>
+                        <Tab.Screen
+                            name="My Data"
+                            options={{
+                                tabBarIcon: ({ color }) => <Icon name="person-circle" size={24} color={color} />,
+                            }}
+                        >
+                            {() => (
+                                <DetailedPlayerView
+                                    player={player}
+                                    club={club}
+                                />
+                            )}
+                        </Tab.Screen>
 
 
-                            <Tab.Screen
-                                name="Settings"
-                                options={{
-                                    tabBarIcon: ({ color }) => <Icon name="settings" size={24} color={color} />,
-                                }}
-                            >
-                                {() => (
-                                    <SettingsView
-                                        player={player}
-                                        showEditPlayer={showEditDetails}
-                                        onEditDetails={() => setShowEditDetails(false)}
-                                    />
-                                )}
-                            </Tab.Screen>
-                        </>
-                    )}
-                </Tab.Navigator>
-
-                {/* Paywall Modal */}
-                <Modal visible={paywallShown} transparent animationType="slide">
-                    <View style={styles.paywall}>
-                        <Text style={styles.paywallText}>Upgrade to Pro to access this feature!</Text>
-                        <TouchableOpacity onPress={() => setPaywallShown(false)} style={styles.dismissButton}>
-                            <Text style={styles.buttonText}>Dismiss</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Modal>
-            </View>
-        </NavigationContainer>
+                        <Tab.Screen
+                            name="Settings"
+                            options={{
+                                tabBarIcon: ({ color }) => <Icon name="settings" size={24} color={color} />,
+                            }}
+                        >
+                            {() => (
+                                <SettingsView
+                                    player={player}
+                                    showEditPlayer={showEditDetails}
+                                    onEditDetails={() => setShowEditDetails(false)}
+                                />
+                            )}
+                        </Tab.Screen>
+                    </>
+                )}
+            </Tab.Navigator>
+        </View>
     );
 };
 
