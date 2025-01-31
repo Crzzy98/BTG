@@ -4,10 +4,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
-import { AppState } from 'react-native'; // Add this import
 import { useColorScheme } from '@/components/useColorScheme';
-import CognitoAuth from '../view-models/CognitoAuth'; // Add this import
 import { Provider } from 'react-redux';
 import store from '../store/store';
 import { AppProvider } from './context/context';
@@ -17,7 +14,7 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: 'index',
+  initialRouteName: '(tabs)',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -38,19 +35,6 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  // Auto-logout effect
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active' && CognitoAuth.loggedIn) {
-        CognitoAuth.resetAutoLogoutTimer();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
   if (!loaded) {
     return null;
   }
@@ -67,44 +51,12 @@ function RootLayoutNav() {
         <AppProvider>
           <Stack>
             <Stack.Screen
-              name="index"
-              options={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#3b873e' },
-              }}
-            />
-            <Stack.Screen
-              name="MainNavigationView"
-              options={{
-                headerShown: false, 
-                contentStyle: { backgroundColor: '#ffffff' },
-              }}
-            />
-            <Stack.Screen
-              name="views/ClubListView"
-              options={{
-                title: 'Club List',
-                contentStyle: { backgroundColor: '#f5f5f5' },
-              }}
-            />
-            <Stack.Screen
-              name="views/CreateClubView"
-              options={{
-                title: 'Create Club',
-                contentStyle: { backgroundColor: '#ffffff' },
-              }}
-            />
-            <Stack.Screen
-              name="ClubDetailedView"
-              options={{
-                title: 'Club Details',
-                contentStyle: { backgroundColor: '#ffffff' },
-              }}
+              name="(tabs)"
+              options={{ headerShown: false }}
             />
           </Stack>
         </AppProvider>
       </ThemeProvider>
     </Provider>
-
   );
 }

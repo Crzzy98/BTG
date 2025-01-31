@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, Alert, TouchableOpacity, Linking, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Player } from '../../store/types';
 
 interface SettingsViewProps {
   player: Player;
   showEditPlayer: boolean;
-  onEditDetails: () => void;
 }
 
-export default function SettingsView({ 
-  player, 
-  showEditPlayer, 
-  onEditDetails 
+export default function SettingsView({
+  player,
+  showEditPlayer,
 }: SettingsViewProps) {
   const router = useRouter();
   const [appName, setAppName] = useState('Big Team Golf');
@@ -48,6 +46,10 @@ export default function SettingsView({
     );
   };
 
+  function onEditDetails() {
+    router.push('views/MainNavigationView' as Href<string>);
+
+  }
   const handleEditPlayer = () => {
     onEditDetails();
     console.log('Edit Player screen');
@@ -62,8 +64,8 @@ export default function SettingsView({
           <Text style={styles.buttonText}>Edit Player</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          onPress={() => console.log("Change password screen/modal")} 
+        <TouchableOpacity
+          onPress={() => console.log("Change password screen/modal")}
           style={styles.button}
         >
           <Text style={styles.buttonText}>Change Password</Text>

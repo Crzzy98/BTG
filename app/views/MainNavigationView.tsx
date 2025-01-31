@@ -1,25 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Alert, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Tabs } from 'expo-router';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ClubListView from './Club/ClubListView';
 import DetailedPlayerView from './Player/DetailedPlayerView';
-import SettingsView from './SettingsView'; // Mock SettingsView
-import { Player, Club } from '../../store/types'
-const Tab = createBottomTabNavigator();
+import SettingsView from './SettingsView';
+import { Player, Club } from '../../store/types';
 
-const MainNavigationView = () => {
+function TabLayout({ player, club, showEditDetails, onEditDetails }: {
+    player: Player | null;
+    club: Club | null;
+    showEditDetails: boolean;
+    onEditDetails: () => void;
+}) {
+    return (
+        <Tabs
+            screenOptions={{
+                tabBarActiveTintColor: '#FFF',
+                tabBarInactiveTintColor: '#FFF',
+                tabBarStyle: { backgroundColor: '#1F8E3A' },
+                headerShown: false
+            }}
+        >
+            <Tabs.Screen
+                name="clubs"
+                options={{
+                    title: "Clubs",
+                    tabBarIcon: ({ size }) => (
+                        <Icon name="people" size={size} color="#FFF" />
+                    ),
+                }}
+            />
+            {player && club && (
+                <>
+                    <Tabs.Screen
+                        name="mydata"
+                        options={{
+                            title: "My Data",
+                            tabBarIcon: ({ size }) => (
+                                <Icon name="person-circle" size={size} color="#FFF" />
+                            ),
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="settings"
+                        options={{
+                            title: "Settings",
+                            tabBarIcon: ({ size }) => (
+                                <Icon name="settings" size={size} color="#FFF" />
+                            ),
+                        }}
+                    />
+                </>
+            )}
+        </Tabs>
+    );
+}
+
+export default function MainNavigationView() {
     const [isPro, setIsPro] = useState(false);
     const [updateAvailable, setUpdateAvailable] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [selectedPage, setSelectedPage] = useState(0);
     const [player, setPlayer] = useState<Player | null>(null);
     const [club, setClub] = useState<Club | null>(null);
     const [showEditDetails, setShowEditDetails] = useState(false);
 
     useEffect(() => {
-        // Simulate fetching player data
         const fetchPlayer = async () => {
             const mockPlayer = {
                 id: '12345',
@@ -28,32 +75,29 @@ const MainNavigationView = () => {
                 email: 'john.doe@example.com',
                 fullName: 'Doe',
                 getWeight: (club: Club): number => {
-                    // Implement your weight calculation logic here
-                    return club.birdieWeight || 1.0; // Return a number
+                    return club.birdieWeight || 1.0;
                 }
-
             };
+
             const mockClub: Club = {
                 id: 'club123',
                 name: 'Golden Gate Golf Club',
                 passcode: '1234',
-                superAdmin: '12345', // matches mock player ID
-                players: [], // This will be populated with player data
-                admins: ['12345'], // Array of admin user IDs
+                superAdmin: '12345',
+                players: [],
+                admins: ['12345'],
                 birdieWeight: 1.5,
                 clubLimit: 100,
-                password: 'clubpass123' // In real app, this should be handled securely
+                password: 'clubpass123'
             };
-            setPlayer(mockPlayer);
-            setClub(mockClub)
 
-            // Simulate update check
+            setPlayer(mockPlayer);
+            setClub(mockClub);
             setUpdateAvailable(true);
 
-            // Simulate first-time login behavior
             if (!mockPlayer.name) {
-                setSelectedPage(2); // Navigate to Settings
-                setShowEditDetails(true); // Show edit details
+                setSelectedPage(2);
+                setShowEditDetails(true);
             }
         };
 
@@ -72,71 +116,30 @@ const MainNavigationView = () => {
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorTitle}>Uh Oh</Text>
                     <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity onPress={() => setError(null)} style={styles.dismissErrorButton}>
+                    <TouchableOpacity
+                        onPress={() => setError(null)}
+                        style={styles.dismissErrorButton}
+                    >
                         <Text style={styles.buttonText}>Dismiss</Text>
                     </TouchableOpacity>
                 </View>
             )}
 
-            <Tab.Navigator
-                initialRouteName="Clubs"
-                screenOptions={{
-                    tabBarActiveTintColor: '#FFF',
-                    tabBarInactiveTintColor: '#DDD',
-                    tabBarStyle: { backgroundColor: '#1F8E3A' },
-                }}
-            >
-                <Tab.Screen
-                    name="Clubs"
-                    options={{
-                        tabBarIcon: ({ color }) => <Icon name="people" size={24} color={color} />,
-                    }}
-                >
-                    {() => <ClubListView />}
-                </Tab.Screen>
-
-                {player && club && (
-                    <>
-                        <Tab.Screen
-                            name="My Data"
-                            options={{
-                                tabBarIcon: ({ color }) => <Icon name="person-circle" size={24} color={color} />,
-                            }}
-                        >
-                            {() => (
-                                <DetailedPlayerView
-                                    player={player}
-                                    club={club}
-                                />
-                            )}
-                        </Tab.Screen>
-
-
-                        <Tab.Screen
-                            name="Settings"
-                            options={{
-                                tabBarIcon: ({ color }) => <Icon name="settings" size={24} color={color} />,
-                            }}
-                        >
-                            {() => (
-                                <SettingsView
-                                    player={player}
-                                    showEditPlayer={showEditDetails}
-                                    onEditDetails={() => setShowEditDetails(false)}
-                                />
-                            )}
-                        </Tab.Screen>
-                    </>
-                )}
-            </Tab.Navigator>
+            <TabLayout
+                player={player}
+                club={club}
+                showEditDetails={showEditDetails}
+                onEditDetails={() => setShowEditDetails(false)}
+            />
         </View>
     );
-};
-
-export default MainNavigationView;
+}
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#1F8E3A' },
+    container: {
+        flex: 1,
+        backgroundColor: '#1F8E3A'
+    },
     updateOverlay: {
         position: 'absolute',
         top: 0,
@@ -146,7 +149,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFDD44',
         zIndex: 10,
     },
-    updateText: { color: '#333', fontWeight: 'bold', textAlign: 'center' },
+    updateText: {
+        color: '#333',
+        fontWeight: 'bold',
+        textAlign: 'center'
+    },
     errorContainer: {
         position: 'absolute',
         top: 100,
@@ -157,22 +164,36 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         zIndex: 10,
     },
-    errorTitle: { fontSize: 18, fontWeight: 'bold', color: '#FF4C4C' },
-    errorText: { marginVertical: 8, color: '#333' },
+    errorTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#FF4C4C'
+    },
+    errorText: {
+        marginVertical: 8,
+        color: '#333'
+    },
     dismissErrorButton: {
         backgroundColor: '#1F8E3A',
         padding: 8,
         borderRadius: 4,
         alignItems: 'center',
     },
-    buttonText: { color: '#FFF', fontWeight: 'bold' },
+    buttonText: {
+        color: '#FFF',
+        fontWeight: 'bold'
+    },
     paywall: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    paywallText: { color: '#FFF', fontSize: 18, marginBottom: 20 },
+    paywallText: {
+        color: '#FFF',
+        fontSize: 18,
+        marginBottom: 20
+    },
     dismissButton: {
         backgroundColor: '#FF4C4C',
         padding: 12,
